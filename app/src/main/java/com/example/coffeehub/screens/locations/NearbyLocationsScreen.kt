@@ -1,192 +1,320 @@
 package com.example.coffeehub.screens.locations
+import com.example.coffeehub.R
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.*
+import com.google.maps.android.compose.*
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Query
 
-// ================= DATA CLASS =================
-data class LocationData(
-    val id: String,
+/* -------------------- DATA -------------------- */
+
+data class CafePlace(
     val name: String,
-    val address: String,
-    val distance: String,
-    val phone: String,
-    val hours: String,
-    val rating: Double,
-    val available: Int
+    val latLng: LatLng
 )
 
-// ================= MAIN SCREEN =================
+data class PlacesResponse(
+    val results: List<PlaceResult>?,
+    val status: String
+)
+
+data class PlaceResult(
+    val name: String?,
+    val geometry: Geometry?
+)
+
+data class Geometry(
+    val location: LocationLatLng?
+)
+
+data class LocationLatLng(
+    val lat: Double,
+    val lng: Double
+)
+
+/* -------------------- API -------------------- */
+
+interface PlacesApi {
+    @GET("maps/api/place/nearbysearch/json")
+    suspend fun getNearbyCafes(
+        @Query("location") location: String,
+        @Query("radius") radius: Int = 2000,
+        @Query("type") type: String = "cafe",
+        @Query("key") apiKey: String
+    ): PlacesResponse
+}
+
+/* -------------------- SCREEN -------------------- */
+
 @Composable
 fun NearbyLocationsScreen(nav: NavController) {
 
-    var view by remember { mutableStateOf("list") }
-
     val brown = Color(0xFF5C4033)
-    val cream = Color(0xFFF5E6CF)
+    val context = LocalContext.current
 
-    Column(Modifier.fillMaxSize().background(Color.White)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
 
-        // ================= HEADER =================
-        Column(
-            Modifier
-                .background(brown)
-                .padding(22.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.ArrowBack, "", tint = Color.White,
-                    modifier = Modifier.size(26.dp).clickable { nav.popBackStack() })
+        // HEADER
+        Surface(color = brown, shadowElevation = 6.dp) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(26.dp)
+                        .clickable { nav.popBackStack() }
+                )
 
                 Spacer(Modifier.width(12.dp))
 
                 Column {
-                    Text("Nearby Locations", color = Color.White, fontSize = 20.sp)
-                    Text("Find Coffee Hub near you", color = cream, fontSize = 13.sp)
+                    Text(
+                        "Nearby Coffee Shops",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "Based on your live location",
+                        color = Color.White.copy(0.7f),
+                        fontSize = 12.sp
+                    )
                 }
-            }
 
-            Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.weight(1f))
 
-            // 🔥 View Switch Buttons (weight FIXED)
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ModeChip(
-                    text = "List View",
-                    selected = view == "list",
-                    onClick = { view = "list" },
-                    modifier = Modifier.weight(1f)
-                )
-
-                ModeChip(
-                    text = "Map View",
-                    selected = view == "map",
-                    onClick = { view = "map" },
-                    modifier = Modifier.weight(1f)
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://www.google.com/maps/search/coffee+shops+near+me")
+                            )
+                            context.startActivity(intent)
+                        }
                 )
             }
         }
 
-        Spacer(Modifier.height(14.dp))
+        CoffeeMapView()
+    }
+}
 
-        // ================= LIST VIEW =================
-        if (view == "list") {
-            val locations = listOf(
-                LocationData("1","Coffee Hub - MG Road","MG Road, Bangalore","0.5 km","+91 98765 43210","7AM - 11PM",4.8,12),
-                LocationData("2","Coffee Hub - Indiranagar","100ft Road, Bangalore","2.3 km","+91 98765 43211","7AM - 11PM",4.6,8),
-                LocationData("3","Coffee Hub - Koramangala","5th Block, Bangalore","3.8 km","+91 98765 43212","7AM - 12AM",4.7,15),
-                LocationData("4","Coffee Hub - Whitefield","ITPL Road, Bangalore","8.5 km","+91 98765 43213","6:30AM - 11PM",4.5,20),
+/* -------------------- MAP -------------------- */
+
+@SuppressLint("MissingPermission")
+@Composable
+fun CoffeeMapView() {
+
+    val context = LocalContext.current
+    val fusedClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
+
+    var userLocation by remember {
+        mutableStateOf(LatLng(13.0480, 80.1760)) // default
+    }
+
+    var cafes by remember { mutableStateOf<List<CafePlace>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var permissionGranted by remember { mutableStateOf(false) }
+
+    val permissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) {
+            permissionGranted =
+                it[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                        it[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        }
+
+    LaunchedEffect(Unit) {
+        permissionGranted =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        if (!permissionGranted) {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(userLocation, 15f)
+    }
+
+    // GOOGLE MAP STYLE (MATCHES GOOGLE MAPS APP)
+    val mapProperties = MapProperties(
+        isMyLocationEnabled = permissionGranted,
+        mapStyleOptions = MapStyleOptions.loadRawResourceStyle(
+            context,
+            R.raw.google_maps_light
+        )
+    )
+
+    // Get user location
+    LaunchedEffect(permissionGranted) {
+        if (permissionGranted) {
+            fusedClient.lastLocation.addOnSuccessListener { loc ->
+                loc?.let {
+                    userLocation = LatLng(it.latitude, it.longitude)
+                }
+            }
+        }
+    }
+
+    // Fetch cafes
+    LaunchedEffect(userLocation) {
+        isLoading = true
+        cafes = fetchNearbyCafes(userLocation)
+        isLoading = false
+    }
+
+    Box(Modifier.fillMaxSize()) {
+
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            properties = mapProperties,
+            uiSettings = MapUiSettings(
+                zoomControlsEnabled = false,
+                myLocationButtonEnabled = false
+            )
+        ) {
+
+            // USER MARKER
+            Marker(
+                state = MarkerState(userLocation),
+                title = "You are here",
+                icon = BitmapDescriptorFactory.defaultMarker(
+                    BitmapDescriptorFactory.HUE_AZURE
+                )
             )
 
-            Column(
-                Modifier.verticalScroll(rememberScrollState()).padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                locations.forEach { LocationCard(it) }
+            // CAFE MARKERS → NAVIGATION
+            cafes.forEach { cafe ->
+                Marker(
+                    state = MarkerState(cafe.latLng),
+                    title = cafe.name,
+                    icon = BitmapDescriptorFactory.defaultMarker(
+                        BitmapDescriptorFactory.HUE_RED
+                    ),
+                    onClick = {
+                        val uri = Uri.parse(
+                            "google.navigation:q=${cafe.latLng.latitude},${cafe.latLng.longitude}&mode=d"
+                        )
+                        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                            setPackage("com.google.android.apps.maps")
+                        }
+                        context.startActivity(intent)
+                        true
+                    }
+                )
             }
         }
 
-        // ================= MAP VIEW =================
-        else {
-            Box(
-                Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(listOf(cream, Color.White))
-                ),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.LocationOn, "", tint = brown, modifier = Modifier.size(90.dp))
-                    Text("Map Coming Soon", color = brown, fontSize = 18.sp)
-                    Text("Google Map integration next update", color = Color.Gray, fontSize = 12.sp)
-                }
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = Color(0xFF5C4033)
+            )
+        }
+
+        FloatingActionButton(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+            containerColor = Color.White,
+            onClick = {
+                cameraPositionState.position =
+                    CameraPosition.fromLatLngZoom(userLocation, 15f)
             }
-        }
-    }
-}
-
-// ================= CHIP COMPONENT =================
-@Composable
-fun ModeChip(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val brown = Color(0xFF5C4033)
-    Box(
-        modifier
-            .clip(RoundedCornerShape(50.dp))
-            .background(if (selected) Color.White else Color.White.copy(.25f))
-            .clickable { onClick() }
-            .padding(vertical = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text, color = if (selected) brown else Color.White, fontSize = 14.sp)
-    }
-}
-
-// ================= LOCATION CARD =================
-@Composable
-fun LocationCard(l: LocationData) {
-
-    val brown = Color(0xFF5C4033)
-
-    Column(
-        Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color.White)
-            .padding(16.dp)
-    ) {
-
-        // Rating Badge
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
-            Box(
-                Modifier.clip(RoundedCornerShape(50.dp))
-                    .background(Color.Yellow.copy(.35f))
-                    .padding(horizontal = 10.dp, vertical = 5.dp)
-            ) { Text("⭐ ${l.rating}", color = brown, fontSize = 13.sp) }
-        }
-
-        Text(l.name, fontSize = 18.sp, color = brown)
-        Text(l.address, color = Color.Gray, fontSize = 12.sp)
-        Text("${l.distance} away", color = Color.Gray, fontSize = 12.sp)
-        Text("📞 ${l.phone}", color = brown, fontSize = 13.sp)
-        Text("⏳ ${l.hours}", color = brown, fontSize = 13.sp)
-
-        Spacer(Modifier.height(12.dp))
-
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(Color.Green))
-                Spacer(Modifier.width(6.dp))
-                Text("${l.available} seats available", fontSize = 12.sp, color = Color.Gray)
-            }
+            Icon(
+                Icons.Default.MyLocation,
+                contentDescription = null,
+                tint = Color(0xFF5C4033)
+            )
+        }
+    }
+}
 
-            Button(colors = ButtonDefaults.buttonColors(brown), onClick = { }) {
-                Text("Visit", color = Color.White)
+/* -------------------- NETWORK -------------------- */
+
+suspend fun fetchNearbyCafes(location: LatLng): List<CafePlace> {
+    return try {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://maps.googleapis.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val api = retrofit.create(PlacesApi::class.java)
+
+        val response = api.getNearbyCafes(
+            location = "${location.latitude},${location.longitude}",
+            apiKey = "AIzaSyDf0H2XLAqbz5shS7V6S_6uZKXMixtoH3E"
+        )
+
+        if (response.status != "OK" || response.results.isNullOrEmpty()) {
+            emptyList()
+        } else {
+            response.results.mapNotNull {
+                val loc = it.geometry?.location
+                if (it.name != null && loc != null)
+                    CafePlace(it.name, LatLng(loc.lat, loc.lng))
+                else null
             }
         }
+    } catch (e: Exception) {
+        emptyList()
     }
 }
