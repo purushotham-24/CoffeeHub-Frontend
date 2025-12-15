@@ -1,0 +1,204 @@
+package com.example.coffeehub.screens.auth
+
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import kotlinx.coroutines.*
+
+@Composable
+fun Login(nav: NavController) {
+
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("coffeehub_prefs", Context.MODE_PRIVATE)
+
+    val brown = Color(0xFF5C4033)
+    val cream = Color(0xFFF5E6CF)
+
+    var email by remember { mutableStateOf(prefs.getString("email", "") ?: "") }
+    var password by remember { mutableStateOf(prefs.getString("password", "") ?: "") }
+    var rememberMe by remember { mutableStateOf(prefs.getBoolean("remember", false)) }
+
+    var errorMsg by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    fun saveCredentials() {
+        prefs.edit()
+            .putString("email", if (rememberMe) email else "")
+            .putString("password", if (rememberMe) password else "")
+            .putBoolean("remember", rememberMe)
+            .apply()
+    }
+
+    fun signIn() {
+        errorMsg = ""
+
+        if (email.isBlank()) {
+            errorMsg = "Enter Email"
+            return
+        }
+        if (password.length < 6) {
+            errorMsg = "Password must be 6+ characters"
+            return
+        }
+
+        isLoading = true
+
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(800)
+            isLoading = false
+
+            saveCredentials()
+
+            Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+
+            nav.navigate("home") {
+                popUpTo("login") { inclusive = true }
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(cream, brown))),
+        contentAlignment = Alignment.Center
+    ) {
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(26.dp),
+            shape = RoundedCornerShape(26.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+
+            Column(
+                modifier = Modifier.padding(28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Text("Welcome Back ☕", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = brown)
+                Text("Sign in to continue", fontSize = 14.sp, color = Color.Gray)
+
+                Spacer(Modifier.height(25.dp))
+
+                // ------- EMAIL -------
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(14.dp))
+
+                // ------- PASSWORD -------
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                if (errorMsg.isNotEmpty()) {
+                    Text(errorMsg, color = Color.Red, fontSize = 13.sp)
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = rememberMe,
+                            onCheckedChange = { rememberMe = it },
+                            colors = CheckboxDefaults.colors(checkedColor = brown)
+                        )
+                        Text("Remember Me", color = Color.Gray)
+                    }
+
+                    Text(
+                        "Forgot Password?",
+                        color = brown,
+                        modifier = Modifier.clickable { nav.navigate("forgot-password") }
+                    )
+                }
+
+                Spacer(Modifier.height(22.dp))
+
+                Button(
+                    onClick = { signIn() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    enabled = !isLoading,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = brown)
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text("Signing in...", color = Color.White)
+                    } else {
+                        Text("Sign In", fontSize = 18.sp, color = Color.White)
+                    }
+                }
+
+                Spacer(Modifier.height(14.dp))
+
+                Row {
+                    Text("Don't have an account? ", color = Color.Gray)
+                    Text(
+                        "Sign Up",
+                        color = brown,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { nav.navigate("register") }
+                    )
+                }
+            }
+        }
+    }
+}
