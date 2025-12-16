@@ -14,7 +14,7 @@ import com.example.coffeehub.screens.auth.ForgotPassword
 
 // HOME
 import com.example.coffeehub.screens.home.HomeScreen
-import com.example.coffeehub.screens.home.NotificationSettingsScreen
+import com.example.coffeehub.screens.home.NotificationSettings
 
 // SEARCH
 import com.example.coffeehub.screens.search.SearchScreen
@@ -80,7 +80,7 @@ fun AppNavHost() {
 
         // HOME
         composable("home") { HomeScreen(nav) }
-        composable("notifications") { NotificationSettingsScreen { nav.popBackStack() } }
+        composable("notifications") { NotificationSettings { nav.popBackStack() } }
 
         // POPULAR COFFEE
         composable("popular_coffee") { PopularCoffeeList(nav) }

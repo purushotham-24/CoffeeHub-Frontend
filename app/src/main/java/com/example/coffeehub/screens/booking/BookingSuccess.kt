@@ -5,38 +5,91 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.coffeehub.screens.home.NotificationManager
 
 @Composable
 fun BookingSuccess(nav: NavController) {
 
-    val isSeatBooking = BookingManager.bookingType.value == "seat"
+    val brown = Color(0xFF5C4033)
+    val isSeat = BookingManager.bookingType.value == "seat"
+
+    /* ✅ ADD BOOKING + NOTIFICATION ONLY ONCE (STRONG DEDUP LOGIC) */
+    LaunchedEffect(Unit) {
+
+        val bookingTitle = if (isSeat)
+            "Seats: ${BookingManager.selectedSeats.value.joinToString(", ")}"
+        else
+            BookingManager.workspaceName.value ?: ""
+
+        // ✅ STRONG UNIQUE SIGNATURE
+        val uniqueKey = buildString {
+            append(BookingManager.bookingType.value)
+            append("|")
+            append(bookingTitle)
+            append("|")
+            append(BookingManager.selectedDate.value)
+            append("|")
+            append(BookingManager.selectedTime.value)
+        }
+
+        val alreadyExists = BookingHistoryManager.bookings.any { booking ->
+            buildString {
+                append(booking.type)
+                append("|")
+                append(booking.title)
+                append("|")
+                append(booking.date)
+                append("|")
+                append(booking.time)
+            } == uniqueKey
+        }
+
+        if (!alreadyExists) {
+
+            // ✅ SAVE BOOKING
+            BookingHistoryManager.bookings.add(
+                BookingHistory(
+                    type = BookingManager.bookingType.value,
+                    title = bookingTitle,
+                    date = BookingManager.selectedDate.value,
+                    time = BookingManager.selectedTime.value
+                )
+            )
+
+            // ✅ ADD NOTIFICATION
+            NotificationManager.addBookingNotification(
+                title = if (isSeat)
+                    "Seat Booking Confirmed"
+                else
+                    "Workspace Booking Confirmed",
+                message = "Scheduled on ${BookingManager.selectedDate.value} at ${BookingManager.selectedTime.value}"
+            )
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(22.dp),
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
 
-        // SUCCESS ICON
         Box(
-            Modifier
-                .size(95.dp)
+            modifier = Modifier
+                .size(96.dp)
                 .background(Color(0xFFB7E9B0), CircleShape),
             contentAlignment = Alignment.Center
         ) {
@@ -44,79 +97,102 @@ fun BookingSuccess(nav: NavController) {
                 Icons.Default.CheckCircle,
                 contentDescription = null,
                 tint = Color(0xFF2E7D32),
-                modifier = Modifier.size(60.dp)
+                modifier = Modifier.size(64.dp)
             )
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(20.dp))
 
-        Text("Booking Confirmed!", fontSize = 22.sp, color = Color(0xFF5C4033))
         Text(
-            "Your reservation was successful",
+            "Booking Confirmed!",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = brown
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        Text(
+            "Your reservation is successfully completed 🎉",
+            fontSize = 14.sp,
             color = Color.Gray,
-            fontSize = 14.sp
+            textAlign = TextAlign.Center
         )
 
         Spacer(Modifier.height(26.dp))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(Color(0xFFF5E6CF)),
-            shape = RoundedCornerShape(20.dp)
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(Color(0xFFF5E6CF))
         ) {
             Column(
-                Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
 
-                Text("Booking Details", fontSize = 17.sp, color = Color(0xFF5C4033))
+                Text(
+                    "Booking Details",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = brown
+                )
 
-                if (isSeatBooking) {
-                    DetailRow(
-                        Icons.Default.LocationOn,
-                        "Seats",
+                DetailRow(
+                    Icons.Default.LocationOn,
+                    if (isSeat) "Seats" else "Workspace",
+                    if (isSeat)
                         BookingManager.selectedSeats.value.joinToString(", ")
-                    )
-                } else {
-                    DetailRow(
-                        Icons.Default.LocationOn,
-                        "Workspace",
+                    else
                         BookingManager.workspaceName.value ?: ""
-                    )
-                }
-
-                DetailRow(
-                    Icons.Default.CalendarMonth,
-                    "Date",
-                    BookingManager.selectedDate.value
                 )
 
-                DetailRow(
-                    Icons.Default.Schedule,
-                    "Time",
-                    BookingManager.selectedTime.value
-                )
+                DetailRow(Icons.Default.CalendarMonth, "Date", BookingManager.selectedDate.value)
+                DetailRow(Icons.Default.Schedule, "Time", BookingManager.selectedTime.value)
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(18.dp))
+
+        Text(
+            "You can cancel anytime before the booking start time.\nNo charges will be applied.",
+            fontSize = 13.sp,
+            color = Color(0xFF2E7D32),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(28.dp))
 
         Button(
+            onClick = {
+                BookingManager.clear()
+                nav.navigate("booking-details")
+            },
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(50),
+            colors = ButtonDefaults.buttonColors(brown)
+        ) {
+            Text("View My Bookings", color = Color.White, fontSize = 16.sp)
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedButton(
             onClick = {
                 BookingManager.clear()
                 nav.navigate("home") {
                     popUpTo("home") { inclusive = true }
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(55.dp),
-            shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(Color(0xFF5C4033))
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(50)
         ) {
-            Text("Back to Home", color = Color.White, fontSize = 17.sp)
+            Text("Back to Home", fontSize = 16.sp, color = brown)
         }
     }
 }
 
+/* ---------- REUSABLE ROW ---------- */
 @Composable
 fun DetailRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -128,7 +204,7 @@ fun DetailRow(
         Spacer(Modifier.width(10.dp))
         Column {
             Text(label, fontSize = 12.sp, color = Color.Gray)
-            Text(value, fontWeight = FontWeight.Medium, color = Color(0xFF5C4033))
+            Text(value, fontWeight = FontWeight.Medium)
         }
     }
 }

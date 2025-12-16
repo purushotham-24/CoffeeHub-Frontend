@@ -11,10 +11,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,55 +21,103 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun NotificationSettingsScreen(onBack: () -> Unit = {}) {
+fun NotificationSettings(onBack: () -> Unit = {}) {
 
-    val notifications = listOf(
-        NotificationData("Order Delivered", "Your Cappuccino was delivered", "2 min ago", true, Icons.Filled.CheckCircle),
-        NotificationData("New Coffee!", "Try our new Hazelnut Latte", "1 hour ago", true, Icons.Filled.Notifications),
-        NotificationData("Booking Reminder", "Workspace starts in 30 mins", "2 hours ago", false, Icons.Filled.Info),
-        NotificationData("Special Offer", "Get 20% OFF next order", "1 day ago", false, Icons.Filled.Star)
-    )
+    val notifications = NotificationManager.notifications
+    val brown = Color(0xFF5C4033)
 
-    Scaffold(topBar = { NotificationHeader(onBack) }) { pad ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(pad)
-                .fillMaxSize()
-                .background(Color.White)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            items(notifications) { notif ->
-                NotificationCard(notif)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Notifications",
+                        fontSize = 20.sp,
+                        color = Color.White
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    if (notifications.isNotEmpty()) {
+                        TextButton(
+                            onClick = { NotificationManager.clearAll() }
+                        ) {
+                            Text(
+                                "Clear All",
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = brown
+                )
+            )
+        }
+    ) { padding ->
+
+        // ---------- EMPTY STATE ----------
+        if (notifications.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No notifications yet",
+                    color = Color.Gray,
+                    fontSize = 16.sp
+                )
+            }
+        } else {
+
+            // ---------- NOTIFICATION LIST ----------
+            LazyColumn(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .background(Color.White)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(notifications) { notif ->
+                    NotificationCard(notif)
+                }
             }
         }
     }
 }
 
 @Composable
-fun NotificationHeader(onBack: () -> Unit) {
-    TopAppBar(
-        title = { Text("Notifications", fontSize = 20.sp) },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Filled.ArrowBack, "")
-            }
-        }
-    )
-}
+fun NotificationCard(n: AppNotification) {
 
-@Composable
-fun NotificationCard(n: NotificationData) {
+    val brown = Color(0xFF5C4033)
 
-    val bg = if (n.unread) Color(0xFFF5E6CF).copy(alpha = .35f) else Color.White
-    val border = if (n.unread) Color(0xFFF5E6CF) else Color.LightGray.copy(alpha = .3f)
+    val bgColor =
+        if (n.unread) Color(0xFFF5E6CF).copy(alpha = 0.35f)
+        else Color.White
+
+    val borderColor =
+        if (n.unread) Color(0xFFF5E6CF)
+        else Color.LightGray.copy(alpha = 0.3f)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(bg)
-            .border(1.dp, border, RoundedCornerShape(20.dp))
+            .background(bgColor)
+            .border(1.dp, borderColor, RoundedCornerShape(20.dp))
             .padding(14.dp)
     ) {
 
@@ -81,34 +125,44 @@ fun NotificationCard(n: NotificationData) {
 
             Box(
                 modifier = Modifier
-                    .size(50.dp)
+                    .size(46.dp)
                     .clip(CircleShape)
                     .background(Color(0xFFF5E6CF)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(n.icon, "", tint = Color(0xFF5C4033), modifier = Modifier.size(26.dp))
+                Icon(
+                    n.icon,
+                    contentDescription = null,
+                    tint = brown
+                )
             }
 
             Spacer(Modifier.width(12.dp))
 
-            Column {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(n.title, fontSize = 16.sp)
-                    if (n.unread) Box(
-                        Modifier.size(9.dp).clip(CircleShape).background(Color(0xFF5C4033))
-                    )
-                }
-                Text(n.message, fontSize = 13.sp, color = Color.DarkGray, modifier = Modifier.padding(vertical = 4.dp))
-                Text(n.time, fontSize = 11.sp, color = Color.Gray)
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    n.title,
+                    fontSize = 16.sp
+                )
+
+                Spacer(Modifier.height(2.dp))
+
+                Text(
+                    n.message,
+                    fontSize = 13.sp,
+                    color = Color.DarkGray
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    n.time,
+                    fontSize = 11.sp,
+                    color = Color.Gray
+                )
             }
         }
     }
 }
-
-data class NotificationData(
-    val title: String,
-    val message: String,
-    val time: String,
-    val unread: Boolean,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
-)

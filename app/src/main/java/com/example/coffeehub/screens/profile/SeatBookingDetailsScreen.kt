@@ -2,6 +2,8 @@ package com.example.coffeehub.screens.bookings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -10,74 +12,192 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-
-import androidx.compose.foundation.clickable
+import com.example.coffeehub.screens.booking.BookingHistoryManager
+import com.example.coffeehub.screens.booking.BookingHistory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SeatBookingDetailsScreen(nav: NavController) {
 
     val brown = Color(0xFF5C4033)
-    val filterItems = listOf("All", "Upcoming", "Completed")
-    var selected by remember { mutableStateOf("All") }
+
+    // Dialog state
+    var showCancelDialog by remember { mutableStateOf(false) }
+    var selectedBooking by remember { mutableStateOf<BookingHistory?>(null) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Bookings", color = Color.White, fontSize = 20.sp) },
+                title = {
+                    Text(
+                        "My Bookings",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = { nav.navigate("profile") }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    IconButton(onClick = { nav.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, null, tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = brown)
             )
         }
-    ) { pad ->
+    ) { padding ->
 
-        Column(
-            modifier = Modifier
-                .padding(pad)
-                .fillMaxSize()
-                .background(Color.White)
-        ) {
-
-            // 🔥 FILTER BAR
-            Row(
-                Modifier.fillMaxWidth().padding(10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+        // ---------- EMPTY STATE ----------
+        if (BookingHistoryManager.bookings.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
             ) {
-                filterItems.forEach { item ->
-                    Text(
-                        item,
+                Text(
+                    text = "No bookings yet",
+                    fontSize = 18.sp,
+                    color = Color.Gray
+                )
+            }
+        } else {
+
+            // ---------- BOOKINGS LIST ----------
+            LazyColumn(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .background(Color.White),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+
+                items(
+                    items = BookingHistoryManager.bookings,
+                    key = { it.hashCode() } // prevents recomposition bugs
+                ) { booking ->
+
+                    Card(
                         modifier = Modifier
-                            .weight(1f)   // 🔥 FIXED HERE
-                            .padding(6.dp)
-                            .background(
-                                if (selected == item) brown else Color.LightGray,
-                                RoundedCornerShape(10.dp)
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(Color(0xFFF5E6CF))
+                    ) {
+
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+
+                            // ---------- TITLE ----------
+                            Text(
+                                text = if (booking.type == "seat")
+                                    "Seat Reservation"
+                                else
+                                    "Workspace Reservation",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = brown
                             )
-                            .padding(vertical = 10.dp)
-                            .clickable { selected = item },
-                        color = if (selected == item) Color.White else Color.DarkGray,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        fontSize = 15.sp
-                    )
+
+                            // ---------- LOCATION ----------
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.LocationOn, null, tint = brown, modifier = Modifier.size(20.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(booking.title, fontSize = 14.sp, color = Color.DarkGray)
+                            }
+
+                            Divider(color = brown.copy(alpha = 0.25f))
+
+                            BookingInfoRow(Icons.Default.CalendarToday, "Date", booking.date)
+                            BookingInfoRow(Icons.Default.Schedule, "Time", booking.time)
+
+                            // ---------- CANCEL POLICY ----------
+                            Text(
+                                "Free cancellation before booking time · ₹0 charges",
+                                fontSize = 12.sp,
+                                color = Color(0xFF2E7D32)
+                            )
+
+                            // ---------- CANCEL BUTTON ----------
+                            OutlinedButton(
+                                onClick = {
+                                    selectedBooking = booking
+                                    showCancelDialog = true
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(50),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color.Red
+                                )
+                            ) {
+                                Icon(Icons.Default.Cancel, null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Cancel Booking")
+                            }
+                        }
+                    }
                 }
             }
+        }
+    }
 
-            Spacer(modifier = Modifier.height(6.dp))
+    // ---------- CANCEL CONFIRMATION DIALOG ----------
+    if (showCancelDialog && selectedBooking != null) {
+        AlertDialog(
+            onDismissRequest = { showCancelDialog = false },
+            title = {
+                Text("Cancel Booking?")
+            },
+            text = {
+                Text(
+                    "You can cancel this booking now with ₹0 charges.\n\n" +
+                            "This action cannot be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        BookingHistoryManager.bookings.remove(selectedBooking)
+                        selectedBooking = null
+                        showCancelDialog = false
+                    }
+                ) {
+                    Text("Yes, Cancel", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        selectedBooking = null
+                        showCancelDialog = false
+                    }
+                ) {
+                    Text("No")
+                }
+            }
+        )
+    }
+}
 
-            // Content (Demo Only)
-            Text(
-                "Booking List Appears Here...",
-                modifier = Modifier.fillMaxWidth().padding(20.dp),
-                fontSize = 18.sp,
-                color = brown
-            )
+/* ---------- INFO ROW ---------- */
+@Composable
+fun BookingInfoRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, null, tint = Color(0xFF5C4033), modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(10.dp))
+        Column {
+            Text(label, fontSize = 12.sp, color = Color.Gray)
+            Text(value, fontSize = 14.sp, fontWeight = FontWeight.Medium)
         }
     }
 }
