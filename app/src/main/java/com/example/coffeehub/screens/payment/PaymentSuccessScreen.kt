@@ -12,114 +12,161 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.coffeehub.cart.CartManager   // ✅ ADD
+import com.example.coffeehub.cart.CartManager
+import com.example.coffeehub.screens.tracking.OrderTrackingManager
 
 @Composable
 fun PaymentSuccessScreen(nav: NavController) {
 
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
+    val successGreen = Color(0xFF21A44A)
 
-    // 🔥 DYNAMIC AMOUNT
     val amount = "₹${CartManager.totalAmount}"
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(22.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(horizontal = 22.dp, vertical = 26.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // 🎉 Success Icon
+        Spacer(Modifier.height(18.dp))
+
+        // ✅ SUCCESS ICON
         Box(
             modifier = Modifier
-                .size(120.dp)
+                .size(110.dp)
                 .background(Color(0xFFDEF7DA), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                Icons.Default.CheckCircle,
-                contentDescription = "Success",
-                tint = Color(0xFF21A44A),
-                modifier = Modifier.size(90.dp)
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                tint = successGreen,
+                modifier = Modifier.size(80.dp)
             )
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(20.dp))
 
         Text(
-            "Payment Successful!",
+            text = "Payment Successful!",
             color = brown,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
+
+        Spacer(Modifier.height(6.dp))
+
         Text(
-            "Your payment has been processed successfully",
+            text = "Your payment has been processed successfully",
             color = Color.Gray,
-            fontSize = 14.sp
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center
         )
 
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(26.dp))
 
-        // 💳 Payment Summary Card
+        // ✅ PAYMENT DETAILS CARD
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(cream, RoundedCornerShape(22.dp))
-                .padding(22.dp),
+                .background(cream, RoundedCornerShape(20.dp))
+                .padding(vertical = 22.dp, horizontal = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Amount Paid", color = Color.Gray, fontSize = 14.sp)
-            Text(amount, color = brown, fontSize = 32.sp, fontWeight = FontWeight.Bold)
 
-            Spacer(Modifier.height(18.dp))
-            Divider(color = brown.copy(alpha = 0.3f))
+            Text(
+                text = "Amount Paid",
+                color = Color.Gray,
+                fontSize = 12.sp
+            )
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(4.dp))
 
-            PaymentInfoRow("Transaction ID", "#TXN123456789")
-            PaymentInfoRow("Date & Time", "Dec 15, 2024 10:30 AM")
+            Text(
+                text = amount,
+                color = brown,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(16.dp))
+            Divider()
+            Spacer(Modifier.height(12.dp))
+
+            PaymentInfoRow("Transaction ID", "#TXN123456")
+            Spacer(Modifier.height(6.dp))
             PaymentInfoRow("Payment Method", "UPI")
-            PaymentInfoRow("Status", "Success", valueColor = Color(0xFF22A645))
+            Spacer(Modifier.height(6.dp))
+            PaymentInfoRow("Status", "Success", Color(0xFF2E7D32))
         }
 
         Spacer(Modifier.height(30.dp))
 
-        // 🔘 Buttons
-        Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            onClick = {
-                // ✅ CLEAR CART AFTER SUCCESS
-                CartManager.clear()
-                nav.navigate("tracking")
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = brown)
+        // ✅ ACTION BUTTONS (POLISHED)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Track Your Order", color = Color.White, fontSize = 16.sp)
+
+            // 🔹 BACK TO HOME
+            OutlinedButton(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = ButtonDefaults.outlinedButtonBorder,
+                onClick = {
+                    CartManager.clear()
+                    nav.navigate("home") {
+                        popUpTo("payment") { inclusive = true }
+                    }
+                }
+            ) {
+                Text(
+                    text = "Home",
+                    color = brown,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            // 🔹 TRACK ORDER
+            Button(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = brown),
+                onClick = {
+                    CartManager.clear()
+
+                    // 🔥 START ORDER TRACKING
+                    OrderTrackingManager.reset()
+                    OrderTrackingManager.startTracking()
+
+                    nav.navigate("tracking") {
+                        popUpTo("payment") { inclusive = true }
+                    }
+                }
+            ) {
+                Text(
+                    text = "Track Order",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
 
         Spacer(Modifier.height(10.dp))
-
-        TextButton(
-            onClick = {
-                CartManager.clear()
-                nav.navigate("home")
-            }
-        ) {
-            Text(
-                "Back to Home",
-                color = brown,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
     }
 }
 
@@ -127,13 +174,23 @@ fun PaymentSuccessScreen(nav: NavController) {
 fun PaymentInfoRow(
     label: String,
     value: String,
-    valueColor: Color = Color(0xFF5C4033)
+    color: Color = Color(0xFF5C4033)
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = Color.Gray, fontSize = 14.sp)
-        Text(value, color = valueColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(
+            text = label,
+            color = Color.Gray,
+            fontSize = 12.sp
+        )
+        Text(
+            text = value,
+            color = color,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }

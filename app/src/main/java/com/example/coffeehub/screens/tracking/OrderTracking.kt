@@ -1,14 +1,15 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.coffeehub.screens.tracking
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape   // <-- IMPORTANT
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -24,171 +26,189 @@ import androidx.navigation.NavController
 fun OrderTrackingScreen(nav: NavController) {
 
     val brown = Color(0xFF5C4033)
-    val cream = Color(0xFFF5E6CF)
+    val green = Color(0xFF2E7D32)
+    val lightGrey = Color(0xFFF6F6F6)
 
-    val orderSteps = listOf(
-        StepModel(1,"Order Received", completed = true, active = false),
-        StepModel(2,"Order Confirmed", completed = true, active = false),
-        StepModel(3,"Preparing", completed = false, active = true),
-        StepModel(4,"Ready to Serve", completed = false, active = false),
-        StepModel(5,"Served", completed = false, active = false)
-    )
+    val orderSteps = OrderTrackingManager.steps
+    val noOrderPlaced = orderSteps.all { !it.active && !it.completed }
 
-    Scaffold { pad ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Order Tracking",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            nav.navigate("home") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back to Home",
+                            tint = Color.White
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = brown,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
+            )
+        }
+    ) { padding ->
+
         Column(
-            Modifier.fillMaxSize()
-                .padding(pad)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
                 .background(Color.White)
                 .verticalScroll(rememberScrollState())
         ) {
 
-            // 🔹 Header
-            Row(
-                Modifier.fillMaxWidth()
-                    .background(brown)
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Default.ArrowBack,
-                    tint = Color.White,
-                    contentDescription = null,
-                    modifier = Modifier.size(26.dp).clickable { nav.popBackStack() }
-                )
-                Spacer(Modifier.width(12.dp))
-                Text("Order Tracking", color = Color.White, fontSize = 20.sp)
-            }
-
-            // 🔹 Order Card
-            Box(
-                Modifier.fillMaxWidth().padding(16.dp)
-                    .clip(RoundedCornerShape(18.dp))                // FIXED
-                    .background(cream)
-                    .padding(14.dp)
-            ) {
-                Column {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Column {
-                            Text("Order ID", fontSize = 12.sp, color = Color.Gray)
-                            Text("#ORD123456", color = brown, fontSize = 18.sp)
-                        }
-                        Box(
-                            Modifier.clip(RoundedCornerShape(50.dp)) // FIXED
-                                .background(Color(0xFFFFDEB3))
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Text("In Progress", color = Color(0xFFA46A00), fontSize = 13.sp)
-                        }
-                    }
-
-                    Spacer(Modifier.height(10.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Phone,"", tint=brown)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Estimated time: 15 mins", color=brown)
-                    }
+            /* ---------------- EMPTY STATE ---------------- */
+            if (noOrderPlaced) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 32.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "No orders placed yet",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Gray
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Place an order to start tracking your coffee",
+                        fontSize = 14.sp,
+                        color = Color.LightGray,
+                        textAlign = TextAlign.Center
+                    )
                 }
+                return@Column
             }
 
-            // 🔹 Timeline Steps
-            Column(Modifier.padding(16.dp)) {
+            /* ---------------- TIMELINE CARD ---------------- */
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+                    .background(lightGrey, RoundedCornerShape(20.dp))
+                    .padding(vertical = 22.dp, horizontal = 18.dp)
+            ) {
+
                 orderSteps.forEachIndexed { index, step ->
-                    Row {
+
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
                             Box(
-                                Modifier.size(42.dp).clip(RoundedCornerShape(50.dp))   // FIXED
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
                                     .background(
                                         when {
-                                            step.completed -> Color.Green
+                                            step.completed -> green
                                             step.active -> brown
                                             else -> Color.LightGray
                                         }
                                     ),
                                 contentAlignment = Alignment.Center
-                            ) { Text("${step.id}", color = Color.White) }
-
-                            if (index < orderSteps.size - 1)
-                                Box(
-                                    Modifier.width(3.dp).height(55.dp)
-                                        .background(if (step.completed) Color.Green else Color.LightGray)
+                            ) {
+                                Text(
+                                    text = step.id.toString(),
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
+                            }
+
+                            if (index < orderSteps.lastIndex) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(3.dp)
+                                        .height(52.dp)
+                                        .background(
+                                            if (step.completed) green else Color.LightGray
+                                        )
+                                )
+                            }
                         }
 
-                        Column(Modifier.padding(start = 14.dp)) {
+                        Spacer(Modifier.width(16.dp))
+
+                        Column(
+                            modifier = Modifier.padding(top = 2.dp)
+                        ) {
+
                             Text(
-                                step.name,
+                                text = step.name,
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = when {
-                                    step.active || step.completed -> brown
+                                    step.completed -> green
+                                    step.active -> brown
                                     else -> Color.Gray
                                 }
                             )
-                            if (step.active)
-                                Text("Your order is being prepared",color=Color.Gray)
 
-                            if (step.completed)
-                                Text("Completed ✓", color = Color(0xFF2E7D32))
+                            Spacer(Modifier.height(4.dp))
+
+                            when {
+                                step.active ->
+                                    Text(
+                                        text = "In progress",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
+
+                                step.completed ->
+                                    Text(
+                                        text = "Completed",
+                                        fontSize = 12.sp,
+                                        color = green
+                                    )
+
+                                else ->
+                                    Text(
+                                        text = "Pending",
+                                        fontSize = 12.sp,
+                                        color = Color.LightGray
+                                    )
+                            }
                         }
                     }
-                    Spacer(Modifier.height(16.dp))
-                }
-            }
 
-            // 🔹 Support
-            Box(
-                Modifier.fillMaxWidth().padding(16.dp)
-                    .clip(RoundedCornerShape(18.dp))  // FIXED
-                    .background(Color(0xFFF6F2EA))
-                    .padding(14.dp)
-            ) {
-                Row {
-                    Icon(Icons.Default.Phone,"", tint=brown)
-                    Spacer(Modifier.width(10.dp))
-                    Column {
-                        Text("Contact Support", color=brown)
-                        Text("+91 98765 43210", color=Color.Gray)
+                    if (index != orderSteps.lastIndex) {
+                        Spacer(Modifier.height(20.dp))
                     }
                 }
             }
 
-            // 🔹 Item List
-            Box(
-                Modifier.fillMaxWidth().padding(16.dp)
-                    .clip(RoundedCornerShape(18.dp))  // FIXED
-                    .background(cream)
-                    .padding(14.dp)
-            ) {
-                Column {
-                    Text("Order Items", color=brown)
-                    Spacer(Modifier.height(10.dp))
-
-                    OrderItemRow("2x Cappuccino (Medium)",240)
-                    OrderItemRow("1x Cold Coffee (Large)",150)
-                }
-            }
-
-            Button(
-                onClick = {},
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                colors = ButtonDefaults.buttonColors(brown),
-                shape = RoundedCornerShape(35.dp)   // FIXED
-            ) { Text("Call Support", color = Color.White) }
-
-            Spacer(Modifier.height(30.dp))
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
 
-
-// REUSABLE
-@Composable
-fun OrderItemRow(name:String, amount:Int){
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(name, color=Color.Gray)
-        Text("₹$amount", color=Color(0xFF5C4033), fontWeight=FontWeight.Bold)
-    }
-}
-
-data class StepModel(val id:Int,val name:String,val completed:Boolean,val active:Boolean)
+/* ---------------- MODEL ---------------- */
+data class StepModel(
+    val id: Int,
+    val name: String,
+    val completed: Boolean,
+    val active: Boolean
+)
