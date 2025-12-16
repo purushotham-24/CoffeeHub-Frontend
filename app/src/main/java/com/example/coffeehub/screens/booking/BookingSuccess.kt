@@ -22,8 +22,10 @@ import androidx.navigation.NavController
 @Composable
 fun BookingSuccess(nav: NavController) {
 
+    val isSeatBooking = BookingManager.bookingType.value == "seat"
+
     Column(
-        Modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
             .padding(22.dp),
@@ -35,7 +37,7 @@ fun BookingSuccess(nav: NavController) {
         Box(
             Modifier
                 .size(95.dp)
-                .background(Color(0xFFB7E9B0), shape = CircleShape),
+                .background(Color(0xFFB7E9B0), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -50,39 +52,62 @@ fun BookingSuccess(nav: NavController) {
 
         Text("Booking Confirmed!", fontSize = 22.sp, color = Color(0xFF5C4033))
         Text(
-            "Your workspace has been successfully reserved",
+            "Your reservation was successful",
             color = Color.Gray,
             fontSize = 14.sp
         )
 
         Spacer(Modifier.height(26.dp))
 
-        // BOOKING CARD
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(Color(0xFFF5E6CF)),
             shape = RoundedCornerShape(20.dp)
         ) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(
+                Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
 
                 Text("Booking Details", fontSize = 17.sp, color = Color(0xFF5C4033))
 
-                DetailRow(Icons.Default.LocationOn, "Location", "Premium Workspace - 2nd Floor")
-                DetailRow(Icons.Default.CalendarMonth, "Date", "Dec 15, 2024")
-                DetailRow(Icons.Default.Schedule, "Time", "10:00 AM - 2:00 PM")
+                if (isSeatBooking) {
+                    DetailRow(
+                        Icons.Default.LocationOn,
+                        "Seats",
+                        BookingManager.selectedSeats.value.joinToString(", ")
+                    )
+                } else {
+                    DetailRow(
+                        Icons.Default.LocationOn,
+                        "Workspace",
+                        BookingManager.workspaceName.value ?: ""
+                    )
+                }
 
-                Divider(color = Color(0xFF5C4033).copy(alpha = 0.2f))
+                DetailRow(
+                    Icons.Default.CalendarMonth,
+                    "Date",
+                    BookingManager.selectedDate.value
+                )
 
-                Text("Booking ID", fontSize = 12.sp, color = Color.Gray)
-                Text("#BK123456789", color = Color(0xFF5C4033), fontWeight = FontWeight.Bold)
+                DetailRow(
+                    Icons.Default.Schedule,
+                    "Time",
+                    BookingManager.selectedTime.value
+                )
             }
         }
 
         Spacer(Modifier.height(24.dp))
 
-        // 🔥 Only button remaining — Go to Home
         Button(
-            onClick = { nav.navigate("home") },
+            onClick = {
+                BookingManager.clear()
+                nav.navigate("home") {
+                    popUpTo("home") { inclusive = true }
+                }
+            },
             modifier = Modifier.fillMaxWidth().height(55.dp),
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(Color(0xFF5C4033))
@@ -93,13 +118,17 @@ fun BookingSuccess(nav: NavController) {
 }
 
 @Composable
-fun DetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
+fun DetailRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, null, tint = Color(0xFF5C4033), modifier = Modifier.size(22.dp))
+        Icon(icon, null, tint = Color(0xFF5C4033))
         Spacer(Modifier.width(10.dp))
         Column {
             Text(label, fontSize = 12.sp, color = Color.Gray)
-            Text(value, color = Color(0xFF5C4033), fontWeight = FontWeight.Medium)
+            Text(value, fontWeight = FontWeight.Medium, color = Color(0xFF5C4033))
         }
     }
 }

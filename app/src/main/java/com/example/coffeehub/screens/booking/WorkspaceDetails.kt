@@ -3,6 +3,8 @@ package com.example.coffeehub.screens.booking
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,73 +20,87 @@ import androidx.navigation.NavController
 fun WorkspaceDetails(nav: NavController, id: String) {
 
     val brown = Color(0xFF5C4033)
-    val cream = Color(0xFFF9F2E7)
 
-    // Workspace Title
-    val name = when(id) {
+    val name = when (id) {
         "1" -> "Solo Workspace"
         "2" -> "Duo Workspace"
         "3" -> "Team Workspace"
         else -> "Workspace"
     }
 
+    // ✅ ENSURE WORKSPACE STATE
+    BookingManager.bookingType.value = "workspace"
+    BookingManager.workspaceId.value = id
+    BookingManager.workspaceName.value = name
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(cream)
-            .padding(22.dp),
-        verticalArrangement = Arrangement.spacedBy(22.dp)
+            .background(Color(0xFFF9F2E7))
     ) {
 
-        //---------------- Header ----------------//
-        Text(
-            name,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = brown
-        )
-
-        Text(
-            "A peaceful, productive work spot with comfort and fast connectivity.",
-            fontSize = 15.sp,
-            color = Color.Gray
-        )
-
-        Divider(thickness = 1.dp, color = Color(0xFFD6C7B5))
-
-        //---------------- Workspace Features 🔥 ----------------//
-        Text("What you get 🚀", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = brown)
-
-        FeatureChip("⚡ High-Speed WiFi")
-        FeatureChip("🔌 Charging Points & Power Backup")
-        FeatureChip("☕ Unlimited Hot Coffee")
-        FeatureChip("🪑 Premium Comfortable Seating")
-        FeatureChip("❄ Air Conditioned Environment")
-        FeatureChip("📝 Perfect for Focus, Coding & Study")
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        //---------------- Buttons ----------------//
-        Button(
-            onClick = { nav.navigate("workspace_pricing/$id") }, // SAME NAVIGATION
-            modifier = Modifier.fillMaxWidth().height(54.dp),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(brown)
+        // ---------- TOP BAR ----------
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(brown)
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("View Pricing", fontSize = 18.sp, color = Color.White)
+            IconButton(onClick = { nav.popBackStack() }) {
+                Icon(Icons.Default.ArrowBack, null, tint = Color.White)
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = name,
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
+            )
         }
 
-        OutlinedButton(
-            onClick = { nav.navigate("datetime") }, // SAME FLOW
-            modifier = Modifier.fillMaxWidth().height(54.dp),
-            shape = RoundedCornerShape(14.dp)
+        // ---------- CONTENT ----------
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(22.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Book Now", fontSize = 18.sp, color = brown)
+
+            Text(
+                "Perfect workspace for focus & productivity",
+                color = Color.Gray
+            )
+
+            Divider()
+
+            FeatureChip("⚡ High-Speed WiFi")
+            FeatureChip("☕ Unlimited Coffee")
+            FeatureChip("❄ Air Conditioned")
+            FeatureChip("🔌 Power Backup")
+
+            Spacer(Modifier.height(10.dp))
+
+            Button(
+                onClick = { nav.navigate("workspace_pricing/$id") },
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                colors = ButtonDefaults.buttonColors(brown),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text("View Pricing", color = Color.White)
+            }
+
+            OutlinedButton(
+                onClick = { nav.navigate("datetime") },
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text("Book Now", color = brown)
+            }
         }
     }
 }
 
-//---------- Reusable Feature Chip UI ----------//
 @Composable
 fun FeatureChip(text: String) {
     Box(
@@ -96,9 +112,9 @@ fun FeatureChip(text: String) {
                 ),
                 RoundedCornerShape(14.dp)
             )
-            .padding(vertical = 10.dp, horizontal = 14.dp),
+            .padding(12.dp),
         contentAlignment = Alignment.CenterStart
     ) {
-        Text(text, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF5C4033))
+        Text(text, fontWeight = FontWeight.Medium, color = Color(0xFF5C4033))
     }
 }

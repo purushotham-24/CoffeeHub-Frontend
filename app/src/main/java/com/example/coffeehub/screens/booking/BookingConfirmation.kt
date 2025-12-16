@@ -21,13 +21,15 @@ import androidx.navigation.NavController
 @Composable
 fun BookingConfirmation(nav: NavController) {
 
+    val isSeatBooking = BookingManager.bookingType.value == "seat"
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
 
-        //---------------- TOP BAR ----------------//
+        // ---------- TOP BAR ----------
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -37,24 +39,24 @@ fun BookingConfirmation(nav: NavController) {
         ) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier
                     .size(26.dp)
                     .clickable { nav.popBackStack() }
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(Modifier.width(12.dp))
 
             Text(
-                text = "Booking Confirmation",
+                "Booking Confirmation",
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold
             )
         }
 
-        //---------------- DETAILS ----------------//
+        // ---------- CONTENT ----------
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -62,72 +64,88 @@ fun BookingConfirmation(nav: NavController) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // Seat card
+            // ---------- MAIN CARD ----------
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(Color(0xFFF5E6CF))
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Seat Reservation Confirm", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF5C4033))
-                    Text("Selected Seat: D3", fontSize = 13.sp, color = Color(0xFF5C4033).copy(alpha = .7f))
-                }
-            }
+                Column(Modifier.padding(16.dp)) {
 
-            Text("Reservation Details", color = Color(0xFF5C4033), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-
-            InfoItem(Icons.Default.CalendarToday, "Date", "Dec 15, 2024")
-            InfoItem(Icons.Default.Schedule, "Time", "10:00 AM - 2:00 PM")
-            InfoItem(Icons.Default.Schedule, "Payment Method", "UPI")
-
-            // PRICE SUMMARY
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(Color(0xFFF8F8F8))
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Price Summary", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF5C4033))
-
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Base Price", color = Color.Gray)
-                        Text("₹400", color = Color(0xFF5C4033))
-                    }
-
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Taxes & Fees", color = Color.Gray)
-                        Text("₹50", color = Color(0xFF5C4033))
-                    }
-
-                    Divider()
-
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Total Amount", fontWeight = FontWeight.Bold, color = Color(0xFF5C4033))
-                        Text("₹450", fontWeight = FontWeight.Bold, color = Color(0xFF5C4033))
+                    if (isSeatBooking) {
+                        Text(
+                            "Seat Reservation",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF5C4033)
+                        )
+                        Text(
+                            "Seats: ${BookingManager.selectedSeats.value.joinToString(", ")}",
+                            fontSize = 13.sp,
+                            color = Color.Gray
+                        )
+                    } else {
+                        Text(
+                            "Workspace Reservation",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF5C4033)
+                        )
+                        Text(
+                            BookingManager.workspaceName.value ?: "",
+                            fontSize = 13.sp,
+                            color = Color.Gray
+                        )
                     }
                 }
             }
+
+            Text(
+                "Reservation Details",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF5C4033)
+            )
+
+            InfoItem(
+                Icons.Default.CalendarToday,
+                "Date",
+                BookingManager.selectedDate.value
+            )
+
+            InfoItem(
+                Icons.Default.Schedule,
+                "Time",
+                BookingManager.selectedTime.value
+            )
         }
 
-        //---------------- CONFIRM & RESERVE BUTTON (WORKING) ----------------//
+        // ---------- CONFIRM BUTTON ----------
         Button(
-            onClick = { nav.navigate("booking_success") },         //  FIXED
+            onClick = { nav.navigate("booking_success") },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
                 .height(56.dp),
-            colors = ButtonDefaults.buttonColors(Color(0xFF5C4033)),
-            shape = RoundedCornerShape(50)
+            shape = RoundedCornerShape(50),
+            colors = ButtonDefaults.buttonColors(Color(0xFF5C4033))
         ) {
-            Text("Confirm & Reserve", fontSize = 17.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Confirm & Reserve",
+                fontSize = 17.sp,
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
 
-
-//---------- REUSABLE ROW ----------
 @Composable
-fun InfoItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
+fun InfoItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -135,11 +153,11 @@ fun InfoItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: Strin
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, null, tint = Color(0xFF5C4033), modifier = Modifier.size(22.dp))
+        Icon(icon, null, tint = Color(0xFF5C4033))
         Spacer(Modifier.width(10.dp))
         Column {
             Text(label, fontSize = 12.sp, color = Color.Gray)
-            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF5C4033))
+            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium)
         }
     }
 }

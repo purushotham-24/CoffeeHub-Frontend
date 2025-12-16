@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,9 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.coffeehub.screens.home.components.HeaderBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Schedule
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,58 +26,67 @@ fun DateTimeSelection(nav: NavController) {
     var selectedTime by remember { mutableStateOf("") }
 
     val timeSlots = listOf(
-        "09:00 AM","10:00 AM","11:00 AM","12:00 PM","01:00 PM",
-        "02:00 PM","03:00 PM","04:00 PM","05:00 PM","06:00 PM"
+        "09:00 AM","10:00 AM","11:00 AM","12:00 PM",
+        "01:00 PM","02:00 PM","03:00 PM","04:00 PM","05:00 PM","06:00 PM"
     )
 
-    Column(Modifier.fillMaxSize().background(Color.White)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
 
-        HeaderBar(title = "Select Date & Time", nav = nav, showBack = true)
+        HeaderBar(
+            title = "Select Date & Time",
+            nav = nav,
+            showBack = true
+        )
 
         Column(Modifier.padding(20.dp)) {
 
+            // DATE
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = Color(0xFF5C4033))
+                Icon(Icons.Default.CalendarToday, null, tint = Color(0xFF5C4033))
                 Spacer(Modifier.width(8.dp))
-                Text("Select Date", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text("Select Date", fontWeight = FontWeight.SemiBold)
             }
 
             Spacer(Modifier.height(10.dp))
 
-            // **FIXED COLOR SECTION**
             OutlinedTextField(
                 value = selectedDate,
                 onValueChange = { selectedDate = it },
-                modifier = Modifier.fillMaxWidth().height(55.dp),
-                shape = RoundedCornerShape(18.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF5C4033),
-                    unfocusedBorderColor = Color(0xFFF5E6CF),
-                    focusedLabelColor = Color(0xFF5C4033)
-                )
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp)
             )
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(24.dp))
 
+            // TIME
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Schedule, contentDescription = null, tint = Color(0xFF5C4033))
+                Icon(Icons.Default.Schedule, null, tint = Color(0xFF5C4033))
                 Spacer(Modifier.width(8.dp))
-                Text("Select Time", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text("Select Time", fontWeight = FontWeight.SemiBold)
             }
 
             Spacer(Modifier.height(12.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 timeSlots.chunked(3).forEach { row ->
-                    Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         row.forEach { time ->
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(48.dp)
                                     .background(
-                                        if (selectedTime == time) Color(0xFF5C4033)
-                                        else Color(0xFFF5E6CF).copy(alpha = 0.6f),
+                                        if (selectedTime == time)
+                                            Color(0xFF5C4033)
+                                        else
+                                            Color(0xFFF5E6CF),
                                         RoundedCornerShape(14.dp)
                                     )
                                     .clickable { selectedTime = time },
@@ -85,9 +94,11 @@ fun DateTimeSelection(nav: NavController) {
                             ) {
                                 Text(
                                     time,
-                                    fontSize = 13.sp,
-                                    color = if (selectedTime == time) Color.White else Color(0xFF5C4033),
-                                    fontWeight = if (selectedTime == time) FontWeight.Bold else FontWeight.Medium
+                                    color = if (selectedTime == time)
+                                        Color.White
+                                    else
+                                        Color(0xFF5C4033),
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -98,17 +109,35 @@ fun DateTimeSelection(nav: NavController) {
 
         Spacer(Modifier.weight(1f))
 
+        // CONTINUE BUTTON
         Button(
-            onClick = { nav.navigate("booking_confirmation") },
+            onClick = {
+
+                // SAVE DATE & TIME
+                BookingManager.selectedDate.value = selectedDate
+                BookingManager.selectedTime.value = selectedTime
+
+                // 🔥 IMPORTANT FIX FOR WORKSPACE FLOW
+                if (BookingManager.bookingType.value.isBlank()) {
+                    BookingManager.bookingType.value = "workspace"
+                }
+
+                nav.navigate("booking_confirmation")
+            },
             enabled = selectedTime.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth().padding(20.dp).height(60.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+                .height(56.dp),
             shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedTime.isNotEmpty()) Color(0xFF5C4033) else Color.LightGray
-            )
+            colors = ButtonDefaults.buttonColors(Color(0xFF5C4033))
         ) {
-            Text("Continue", fontSize = 17.sp,
-                color = if (selectedTime.isNotEmpty()) Color.White else Color.Gray)
+            Text(
+                "Continue",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
