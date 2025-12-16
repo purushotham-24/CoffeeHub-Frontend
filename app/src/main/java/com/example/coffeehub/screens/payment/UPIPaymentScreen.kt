@@ -1,25 +1,26 @@
 package com.example.coffeehub.screens.payment
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border       // <-- FIXED
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
+import com.example.coffeehub.cart.CartManager
 
-@OptIn(ExperimentalMaterial3Api::class) // warning only, not error
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UPIPaymentScreen(nav: NavController) {
 
@@ -27,6 +28,10 @@ fun UPIPaymentScreen(nav: NavController) {
     var upiId by remember { mutableStateOf("") }
 
     val upiApps = listOf("Google Pay", "PhonePe", "Paytm")
+    val brown = Color(0xFF5C4033)
+
+    // 🔥 DYNAMIC TOTAL AMOUNT
+    val totalAmount = CartManager.totalAmount
 
     Scaffold(
         topBar = {
@@ -37,7 +42,7 @@ fun UPIPaymentScreen(nav: NavController) {
                         Icon(Icons.Filled.ArrowBack, null, tint = Color.White)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF5C4033))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = brown)
             )
         }
     ) { pad ->
@@ -51,7 +56,7 @@ fun UPIPaymentScreen(nav: NavController) {
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
 
-            // ₹ Amount Box
+            // 💰 Amount Box (DYNAMIC)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -61,14 +66,22 @@ fun UPIPaymentScreen(nav: NavController) {
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Amount to Pay", color = Color.Gray)
-                    Text("₹390", fontSize = 35.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5C4033))
+                    Text(
+                        text = "₹$totalAmount",
+                        fontSize = 35.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = brown
+                    )
                 }
             }
 
-            // UPI App Selection
-            Text("Select UPI App", fontWeight = FontWeight.Bold, color = Color(0xFF5C4033))
+            // 📱 UPI App Selection
+            Text("Select UPI App", fontWeight = FontWeight.Bold, color = brown)
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 upiApps.forEach { app ->
                     Box(
                         modifier = Modifier
@@ -78,15 +91,16 @@ fun UPIPaymentScreen(nav: NavController) {
                                 if (selectedApp == app) Color(0xFFF5E6CF) else Color.White,
                                 RoundedCornerShape(16.dp)
                             )
-                            .border(2.dp,                     // <-- NOW VALID
-                                if (selectedApp == app) Color(0xFF5C4033) else Color.LightGray,
+                            .border(
+                                2.dp,
+                                if (selectedApp == app) brown else Color.LightGray,
                                 RoundedCornerShape(16.dp)
                             )
                             .padding(vertical = 18.dp)
                             .clickable { selectedApp = app },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(app, color = Color(0xFF5C4033), fontSize = 14.sp)
+                        Text(app, color = brown, fontSize = 14.sp)
                     }
                 }
             }
@@ -98,8 +112,8 @@ fun UPIPaymentScreen(nav: NavController) {
                 Divider(Modifier.weight(1f), color = Color.Gray)
             }
 
-            // Manual UPI ID
-            Text("Enter UPI ID", fontWeight = FontWeight.Bold, color = Color(0xFF5C4033))
+            // ✍️ Manual UPI ID
+            Text("Enter UPI ID", fontWeight = FontWeight.Bold, color = brown)
 
             OutlinedTextField(
                 value = upiId,
@@ -109,24 +123,31 @@ fun UPIPaymentScreen(nav: NavController) {
                 shape = RoundedCornerShape(14.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF5C4033),
+                    focusedBorderColor = brown,
                     unfocusedBorderColor = Color.Gray
                 )
             )
 
             Spacer(Modifier.weight(1f))
 
-            // Pay Button
+            // 🔥 Pay Button (DYNAMIC AMOUNT)
             Button(
                 onClick = { nav.navigate("payment_success") },
                 enabled = selectedApp.isNotEmpty() || upiId.isNotBlank(),
-                modifier = Modifier.fillMaxWidth().height(55.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(55.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectedApp.isNotEmpty() || upiId.isNotBlank())
-                        Color(0xFF5C4033) else Color.LightGray
+                    containerColor =
+                        if (selectedApp.isNotEmpty() || upiId.isNotBlank())
+                            brown else Color.LightGray
                 )
             ) {
-                Text("Pay ₹390", color = Color.White, fontSize = 18.sp)
+                Text(
+                    text = "Pay ₹$totalAmount",
+                    color = Color.White,
+                    fontSize = 18.sp
+                )
             }
         }
     }

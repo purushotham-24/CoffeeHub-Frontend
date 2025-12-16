@@ -20,28 +20,38 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.coffeehub.cart.CartManager   // ✅ ADD THIS
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CardPaymentScreen(nav: NavController) {
 
+    // 🔥 DYNAMIC TOTAL AMOUNT
+    val totalAmount = CartManager.totalAmount
+
     var cardNumber by remember { mutableStateOf("") }
     var cardName by remember { mutableStateOf("") }
     var expiryDate by remember { mutableStateOf("") }
     var cvv by remember { mutableStateOf("") }
-    var saveCard by remember { mutableStateOf(false) } // CHECKBOX ENABLED 🔥
+    var saveCard by remember { mutableStateOf(false) }
 
     // Auto MM/YY format
     fun handleExpiry(text: String) {
         var value = text.filter { it.isDigit() }
-        if (value.length > 2) value = value.substring(0, 2) + "/" + value.substring(2, minOf(4, value.length))
+        if (value.length > 2)
+            value = value.substring(0, 2) + "/" +
+                    value.substring(2, minOf(4, value.length))
         if (value.length <= 5) expiryDate = value
     }
 
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
 
-    val isValid = cardNumber.length == 16 && cardName.isNotBlank() && expiryDate.length == 5 && cvv.length == 3
+    val isValid =
+        cardNumber.length == 16 &&
+                cardName.isNotBlank() &&
+                expiryDate.length == 5 &&
+                cvv.length == 3
 
     Scaffold(
         topBar = {
@@ -61,13 +71,13 @@ fun CardPaymentScreen(nav: NavController) {
             modifier = Modifier
                 .padding(pad)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()) // 🟢 Moves UI up on keyboard open
+                .verticalScroll(rememberScrollState())
                 .background(Color.White)
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(22.dp)
         ) {
 
-            // 💰 Billing Summary
+            // 💰 Billing Summary (DYNAMIC)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -78,11 +88,16 @@ fun CardPaymentScreen(nav: NavController) {
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("Amount to Pay", color = Color.Gray, fontSize = 14.sp)
-                    Text("₹390", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = brown)
+                    Text(
+                        text = "₹$totalAmount",
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = brown
+                    )
                 }
             }
 
-            // 🟤 Live Card Preview
+            // 🟤 Live Card Preview (UNCHANGED)
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -101,23 +116,34 @@ fun CardPaymentScreen(nav: NavController) {
                     Text(
                         text = if (cardNumber.isEmpty()) "**** **** **** ****"
                         else cardNumber.chunked(4).joinToString(" "),
-                        fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
 
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
                         Column {
                             Text("Card Holder", color = Color.White.copy(.6f), fontSize = 12.sp)
-                            Text(if (cardName.isEmpty()) "YOUR NAME" else cardName, color = Color.White)
+                            Text(
+                                if (cardName.isEmpty()) "YOUR NAME" else cardName,
+                                color = Color.White
+                            )
                         }
                         Column {
                             Text("Expires", color = Color.White.copy(.6f), fontSize = 12.sp)
-                            Text(if (expiryDate.isEmpty()) "MM/YY" else expiryDate, color = Color.White)
+                            Text(
+                                if (expiryDate.isEmpty()) "MM/YY" else expiryDate,
+                                color = Color.White
+                            )
                         }
                     }
                 }
             }
 
-            // 🔢 Input Fields
+            // 🔢 Input Fields (UNCHANGED)
             OutlinedTextField(
                 value = cardNumber,
                 onValueChange = { if (it.length <= 16) cardNumber = it },
@@ -133,7 +159,6 @@ fun CardPaymentScreen(nav: NavController) {
                 onValueChange = { cardName = it.uppercase() },
                 label = { Text("Card Holder Name") },
                 placeholder = { Text("JOHN DOE") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp)
             )
@@ -161,13 +186,12 @@ fun CardPaymentScreen(nav: NavController) {
                 )
             }
 
-            // ENABLED CHECKBOX ✔
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = saveCard, onCheckedChange = { saveCard = it })
                 Text("Save card for future", fontSize = 14.sp, color = Color.Gray)
             }
 
-            // 🔥 Payment Button
+            // 🔥 Payment Button (DYNAMIC)
             Button(
                 onClick = { if (isValid) nav.navigate("payment_success") },
                 enabled = isValid,
@@ -175,7 +199,11 @@ fun CardPaymentScreen(nav: NavController) {
                 shape = RoundedCornerShape(30.dp),
                 colors = ButtonDefaults.buttonColors(if (isValid) brown else Color.LightGray)
             ) {
-                Text("Pay ₹390", fontSize = 18.sp, color = Color.White)
+                Text(
+                    text = "Pay ₹$totalAmount",
+                    fontSize = 18.sp,
+                    color = Color.White
+                )
             }
         }
     }

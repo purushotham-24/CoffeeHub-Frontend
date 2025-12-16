@@ -1,11 +1,16 @@
 package com.example.coffeehub.cart
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 
 object CartManager {
 
-    // ✅ GLOBAL CART STATE (Compose aware)
+    // 🟢 GLOBAL CART (Compose aware)
     val cartItems = mutableStateListOf<CartItem>()
+
+    // 🟡 PROMO STATE (NEW – SAFE)
+    val appliedPromoCode = mutableStateOf<String?>(null)
+    val discountAmount = mutableStateOf(0)
 
     fun addItem(
         id: String,
@@ -42,5 +47,31 @@ object CartManager {
 
     fun clear() {
         cartItems.clear()
+        appliedPromoCode.value = null
+        discountAmount.value = 0
+    }
+
+    // 🔥 AMOUNT CALCULATION
+    val subtotal: Int
+        get() = cartItems.sumOf { it.price * it.quantity }
+
+    val tax: Int
+        get() = (subtotal * 0.05).toInt()
+
+    val totalBeforeDiscount: Int
+        get() = subtotal + tax
+
+    val totalAmount: Int
+        get() = (totalBeforeDiscount - discountAmount.value).coerceAtLeast(0)
+
+    // 🎟 APPLY PROMO (FRONTEND ONLY)
+    fun applyPromo(code: String) {
+        discountAmount.value = when (code) {
+            "COFFEE20" -> (totalBeforeDiscount * 0.20).toInt()
+            "FIRST50" -> 50
+            "WEEKEND30" -> (totalBeforeDiscount * 0.30).toInt()
+            else -> 0
+        }
+        appliedPromoCode.value = code
     }
 }

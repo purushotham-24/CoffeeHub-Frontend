@@ -7,7 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,13 +15,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.coffeehub.cart.CartManager   // ✅ ADD
 
 @Composable
 fun PaymentSuccessScreen(nav: NavController) {
 
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
-    val amount = "₹390"
+
+    // 🔥 DYNAMIC AMOUNT
+    val amount = "₹${CartManager.totalAmount}"
 
     Column(
         modifier = Modifier
@@ -49,7 +52,12 @@ fun PaymentSuccessScreen(nav: NavController) {
 
         Spacer(Modifier.height(18.dp))
 
-        Text("Payment Successful!", color = brown, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(
+            "Payment Successful!",
+            color = brown,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
         Text(
             "Your payment has been processed successfully",
             color = Color.Gray,
@@ -84,22 +92,47 @@ fun PaymentSuccessScreen(nav: NavController) {
 
         // 🔘 Buttons
         Button(
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            onClick = { nav.navigate("tracking") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            onClick = {
+                // ✅ CLEAR CART AFTER SUCCESS
+                CartManager.clear()
+                nav.navigate("tracking")
+            },
             colors = ButtonDefaults.buttonColors(containerColor = brown)
-        ) { Text("Track Your Order", color = Color.White, fontSize = 16.sp) }
+        ) {
+            Text("Track Your Order", color = Color.White, fontSize = 16.sp)
+        }
 
         Spacer(Modifier.height(10.dp))
 
-        TextButton(onClick = { nav.navigate("home") }) {
-            Text("Back to Home", color = brown, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+        TextButton(
+            onClick = {
+                CartManager.clear()
+                nav.navigate("home")
+            }
+        ) {
+            Text(
+                "Back to Home",
+                color = brown,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
 
 @Composable
-fun PaymentInfoRow(label: String, value: String, valueColor: Color = Color(0xFF5C4033)) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+fun PaymentInfoRow(
+    label: String,
+    value: String,
+    valueColor: Color = Color(0xFF5C4033)
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
         Text(label, color = Color.Gray, fontSize = 14.sp)
         Text(value, color = valueColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
     }

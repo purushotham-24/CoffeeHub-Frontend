@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.coffeehub.cart.CartManager
 
 //-------------------------------------------------------------
 // DATA MODEL
@@ -30,7 +31,7 @@ data class PromoCodeData(
 )
 
 //-------------------------------------------------------------
-// PROMO SCREEN (Polished UI)
+// PROMO SCREEN (FULLY WORKING)
 //-------------------------------------------------------------
 @Composable
 fun Promo(nav: NavController) {
@@ -45,31 +46,34 @@ fun Promo(nav: NavController) {
         PromoCodeData("FREESHIP", "Free Service", "Free table service on all orders", 0)
     )
 
-    Column(Modifier.fillMaxSize().background(Color.White)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
 
         //---------------------------------------------------------
-        // HEADER WITH POLISHED BACK BUTTON
+        // HEADER
         //---------------------------------------------------------
         Row(
-            Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFF5C4033))
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // ⭐ Premium Back Button
             IconButton(
-                onClick = {
-                    if (nav.previousBackStackEntry != null) nav.popBackStack()
-                    else nav.navigate("cart")
-                },
+                onClick = { nav.popBackStack() },
                 modifier = Modifier
                     .size(42.dp)
-                    .background(Color.White.copy(alpha = 0.15f), shape = RoundedCornerShape(50))
+                    .background(
+                        Color.White.copy(alpha = 0.15f),
+                        RoundedCornerShape(50)
+                    )
             ) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    Icons.Default.ArrowBack,
                     contentDescription = "Back",
                     tint = Color.White,
                     modifier = Modifier.size(26.dp)
@@ -90,13 +94,13 @@ fun Promo(nav: NavController) {
         // BODY
         //---------------------------------------------------------
         Column(
-            Modifier
+            modifier = Modifier
                 .padding(16.dp)
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
         ) {
 
-            // INPUT BOX
+            // INPUT
             Text("Enter Promo Code", color = Color(0xFF5C4033))
             Spacer(Modifier.height(8.dp))
 
@@ -109,7 +113,11 @@ fun Promo(nav: NavController) {
                     singleLine = true,
                     modifier = Modifier
                         .weight(1f)
-                        .border(2.dp, Color.LightGray, RoundedCornerShape(12.dp)),
+                        .border(
+                            2.dp,
+                            Color.LightGray,
+                            RoundedCornerShape(12.dp)
+                        ),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.White,
                         unfocusedContainerColor = Color.White
@@ -119,8 +127,14 @@ fun Promo(nav: NavController) {
                 Spacer(Modifier.width(10.dp))
 
                 Button(
-                    onClick = { if (enteredCode.isNotEmpty()) selectedCode = enteredCode },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C4033)),
+                    onClick = {
+                        if (enteredCode.isNotEmpty()) {
+                            selectedCode = enteredCode
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF5C4033)
+                    ),
                     modifier = Modifier.height(55.dp)
                 ) {
                     Text("Apply", color = Color.White)
@@ -130,9 +144,14 @@ fun Promo(nav: NavController) {
             Spacer(Modifier.height(20.dp))
 
             //---------------------------------------------------------
-            // AVAILABLE PROMO CODES LIST
+            // AVAILABLE PROMOS
             //---------------------------------------------------------
-            Text("Available Offers", color = Color(0xFF5C4033), fontSize = 18.sp)
+            Text(
+                "Available Offers",
+                color = Color(0xFF5C4033),
+                fontSize = 18.sp
+            )
+
             Spacer(Modifier.height(12.dp))
 
             promoList.forEach { promo ->
@@ -140,26 +159,44 @@ fun Promo(nav: NavController) {
                 val isSelected = promo.code == selectedCode
 
                 Column(
-                    Modifier
+                    modifier = Modifier
                         .fillMaxWidth()
                         .border(
                             2.dp,
-                            if (isSelected) Color(0xFF5C4033) else Color.LightGray,
+                            if (isSelected)
+                                Color(0xFF5C4033)
+                            else
+                                Color.LightGray,
                             RoundedCornerShape(18.dp)
                         )
-                        .background(if (isSelected) Color(0xFFF5E6CF) else Color.White)
-                        .clickable { selectedCode = promo.code }
+                        .background(
+                            if (isSelected)
+                                Color(0xFFF5E6CF)
+                            else
+                                Color.White
+                        )
+                        .clickable {
+                            selectedCode = promo.code
+                        }
                         .padding(16.dp)
                 ) {
 
                     Row(
-                        Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
 
                         Column(Modifier.weight(1f)) {
-                            Text(promo.code, color = Color(0xFF5C4033), fontWeight = FontWeight.Bold)
-                            Text(promo.description, fontSize = 12.sp, color = Color.Gray)
+                            Text(
+                                promo.code,
+                                color = Color(0xFF5C4033),
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                promo.description,
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
 
                             if (promo.minOrder > 0) {
                                 Text(
@@ -176,13 +213,23 @@ fun Promo(nav: NavController) {
                                 promo.discount,
                                 fontSize = 12.sp,
                                 modifier = Modifier
-                                    .background(Color(0xFFDBF2D4), RoundedCornerShape(50))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                                    .background(
+                                        Color(0xFFDBF2D4),
+                                        RoundedCornerShape(50)
+                                    )
+                                    .padding(
+                                        horizontal = 10.dp,
+                                        vertical = 4.dp
+                                    ),
                                 color = Color(0xFF1E7A1B)
                             )
 
                             if (isSelected) {
-                                Text("✔", fontSize = 22.sp, color = Color(0xFF5C4033))
+                                Text(
+                                    "✔",
+                                    fontSize = 22.sp,
+                                    color = Color(0xFF5C4033)
+                                )
                             }
                         }
                     }
@@ -193,19 +240,32 @@ fun Promo(nav: NavController) {
         }
 
         //---------------------------------------------------------
-        // APPLY SELECTED PROMO BUTTON
+        // APPLY BUTTON (IMPORTANT FIX)
         //---------------------------------------------------------
         Button(
-            onClick = { nav.navigate("cart") },
+            onClick = {
+                selectedCode?.let {
+                    CartManager.applyPromo(it)   // 🔥 APPLY PROMO
+                }
+                nav.popBackStack()               // ✅ GO BACK TO CART
+            },
             enabled = selectedCode != null,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .height(54.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedCode != null) Color(0xFF5C4033) else Color.Gray
+                containerColor = if (selectedCode != null)
+                    Color(0xFF5C4033)
+                else
+                    Color.Gray
             )
         ) {
-            Text("Apply Selected Promo", color = Color.White)
+            Text(
+                "Apply Selected Promo",
+                color = Color.White,
+                fontSize = 16.sp
+            )
         }
     }
 }

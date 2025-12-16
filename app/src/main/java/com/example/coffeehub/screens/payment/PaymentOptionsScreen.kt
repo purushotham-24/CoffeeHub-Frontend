@@ -1,6 +1,4 @@
 package com.example.coffeehub.screens.payment
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.font.FontWeight
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,12 +11,14 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-
+import com.example.coffeehub.cart.CartManager
 
 data class PaymentMethod(
     val id: String,
@@ -32,6 +32,9 @@ data class PaymentMethod(
 fun PaymentOptionsScreen(nav: NavController) {
 
     val brown = Color(0xFF5C4033)
+
+    // 🔥 DYNAMIC TOTAL AMOUNT
+    val totalAmount = CartManager.totalAmount
 
     val paymentMethods = listOf(
         PaymentMethod(
@@ -56,9 +59,9 @@ fun PaymentOptionsScreen(nav: NavController) {
             .background(Color.White)
     ) {
 
-        // 🔥 HEADER
+        // 🔝 HEADER
         Row(
-            Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .background(brown)
                 .padding(14.dp),
@@ -72,12 +75,12 @@ fun PaymentOptionsScreen(nav: NavController) {
         }
 
         Column(
-            Modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(18.dp)
         ) {
 
-            // 🟫 Amount Summary Box
+            // 💰 AMOUNT SUMMARY (DYNAMIC)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -86,7 +89,12 @@ fun PaymentOptionsScreen(nav: NavController) {
             ) {
                 Column {
                     Text("Total Amount", color = Color.Gray, fontSize = 14.sp)
-                    Text("₹390", color = brown, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "₹$totalAmount",
+                        color = brown,
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
@@ -95,12 +103,12 @@ fun PaymentOptionsScreen(nav: NavController) {
             Text("Select Payment Method", color = brown, fontSize = 16.sp)
             Spacer(Modifier.height(10.dp))
 
-            // METHODS LIST
+            // 💳 PAYMENT METHODS
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 paymentMethods.forEach { method ->
 
                     Row(
-                        Modifier
+                        modifier = Modifier
                             .fillMaxWidth()
                             .background(Color.White, RoundedCornerShape(18.dp))
                             .padding(16.dp)
@@ -122,7 +130,11 @@ fun PaymentOptionsScreen(nav: NavController) {
                             Text(method.description, color = Color.Gray, fontSize = 13.sp)
                         }
 
-                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+                        Icon(
+                            Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = Color.Gray
+                        )
                     }
                 }
             }
@@ -130,13 +142,16 @@ fun PaymentOptionsScreen(nav: NavController) {
             // 🔐 SECURITY NOTE
             Spacer(Modifier.height(22.dp))
             Box(
-                Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFFE8F1FF), RoundedCornerShape(14.dp))
                     .padding(14.dp)
             ) {
-                Text("🔒 All payments are secured with SSL encryption",
-                    color = Color(0xFF003A8C), fontSize = 13.sp)
+                Text(
+                    text = "🔒 All payments are secured with SSL encryption",
+                    color = Color(0xFF003A8C),
+                    fontSize = 13.sp
+                )
             }
         }
     }
