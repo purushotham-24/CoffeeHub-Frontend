@@ -1,5 +1,6 @@
 package com.example.coffeehub.screens.profile
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,19 +22,46 @@ import androidx.navigation.NavController
 @Composable
 fun ProfilePage(nav: NavController) {
 
+    val context = nav.context
+    val prefs = context.getSharedPreferences("coffeehub_prefs", Context.MODE_PRIVATE)
+
+    val name = prefs.getString("profile_name", "") ?: ""
+    val email = prefs.getString("profile_email", "") ?: ""
+    val phone = prefs.getString("profile_phone", "") ?: ""
+
+    val initials = name
+        .trim()
+        .split(" ")
+        .filter { it.isNotEmpty() }
+        .take(2)
+        .joinToString("") { it.first().uppercaseChar().toString() }
+        .ifEmpty { "U" }
+
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profile", fontSize = 20.sp, color = Color.White) },
+                title = {
+                    Text(
+                        text = "Profile",
+                        fontSize = 20.sp,
+                        color = Color.White
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { nav.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = brown)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = brown
+                )
             )
         }
     ) { pad ->
@@ -52,6 +80,7 @@ fun ProfilePage(nav: NavController) {
                     .padding(20.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+
                     Box(
                         modifier = Modifier
                             .size(75.dp)
@@ -59,28 +88,52 @@ fun ProfilePage(nav: NavController) {
                             .background(brown),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("JD", color = Color.White, fontSize = 28.sp)
+                        Text(
+                            text = initials,
+                            color = Color.White,
+                            fontSize = 28.sp
+                        )
                     }
 
                     Spacer(Modifier.width(16.dp))
 
                     Column {
-                        Text("John Doe", fontSize = 20.sp, color = brown)
-                        Text("john.doe@email.com", color = Color.Gray, fontSize = 13.sp)
-                        Text("+91 98765 43210", color = Color.Gray, fontSize = 13.sp)
+                        Text(
+                            text = if (name.isNotBlank()) name else "User",
+                            fontSize = 20.sp,
+                            color = brown
+                        )
+                        Text(
+                            text = if (email.isNotBlank()) email else "—",
+                            color = Color.Gray,
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = if (phone.isNotBlank()) phone else "—",
+                            color = Color.Gray,
+                            fontSize = 13.sp
+                        )
                     }
                 }
             }
 
             Spacer(Modifier.height(18.dp))
 
-            MenuItem("Edit Profile", Icons.Default.Person) { nav.navigate("edit-profile") }
+            MenuItem("Edit Profile", Icons.Default.Person) {
+                nav.navigate("edit-profile")
+            }
 
-            // ⭐ use the new route
-            MenuItem("Order History", Icons.Default.History) { nav.navigate("order-history") }
+            MenuItem("Order History", Icons.Default.History) {
+                nav.navigate("order-history")
+            }
 
-            MenuItem("Seat Bookings", Icons.Default.EventSeat) { nav.navigate("booking-details") }
-            MenuItem("Help & Support", Icons.Default.Help) { nav.navigate("support") }
+            MenuItem("Seat Bookings", Icons.Default.EventSeat) {
+                nav.navigate("booking-details")
+            }
+
+            MenuItem("Help & Support", Icons.Default.Help) {
+                nav.navigate("support")
+            }
 
             Spacer(Modifier.height(20.dp))
 
@@ -93,7 +146,7 @@ fun ProfilePage(nav: NavController) {
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                "CoffeeHub v1.0.0",
+                text = "CoffeeHub v1.0.0",
                 color = Color.Gray,
                 fontSize = 12.sp,
                 modifier = Modifier
@@ -105,7 +158,11 @@ fun ProfilePage(nav: NavController) {
 }
 
 @Composable
-fun MenuItem(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+fun MenuItem(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -118,13 +175,22 @@ fun MenuItem(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector
     ) {
         Icon(icon, contentDescription = null, tint = Color(0xFF5C4033))
         Spacer(Modifier.width(14.dp))
-        Text(text, fontSize = 16.sp, color = Color(0xFF5C4033), modifier = Modifier.weight(1f))
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            color = Color(0xFF5C4033),
+            modifier = Modifier.weight(1f)
+        )
         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
     }
 }
 
 @Composable
-fun MenuItemRed(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+fun MenuItemRed(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -137,7 +203,12 @@ fun MenuItemRed(text: String, icon: androidx.compose.ui.graphics.vector.ImageVec
     ) {
         Icon(icon, contentDescription = null, tint = Color.Red)
         Spacer(Modifier.width(14.dp))
-        Text(text, fontSize = 16.sp, color = Color.Red, modifier = Modifier.weight(1f))
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            color = Color.Red,
+            modifier = Modifier.weight(1f)
+        )
         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
     }
 }

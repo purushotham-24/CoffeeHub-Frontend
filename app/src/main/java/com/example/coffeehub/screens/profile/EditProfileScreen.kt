@@ -23,15 +23,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.coffeehub.data.repository.ProfileRepository
+import kotlinx.coroutines.launch
 
 @Composable
 fun EditProfileScreen(nav: NavController) {
 
-    /* ---------------- CONTEXT ---------------- */
     val context = nav.context
     val prefs = context.getSharedPreferences("coffeehub_prefs", Context.MODE_PRIVATE)
+    val repo = remember { ProfileRepository() }
+    val scope = rememberCoroutineScope()
 
-    /* ---------------- STATE ---------------- */
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -39,37 +41,35 @@ fun EditProfileScreen(nav: NavController) {
 
     var isSaving by remember { mutableStateOf(false) }
 
-    /* ---------------- COLORS ---------------- */
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
 
-    /* ---------------- LOAD LOCAL PROFILE ---------------- */
+    /* ---------- LOAD FROM BACKEND ---------- */
     LaunchedEffect(Unit) {
-        name = prefs.getString("profile_name", "") ?: ""
-        email = prefs.getString("profile_email", "") ?: ""
-        phone = prefs.getString("profile_phone", "") ?: ""
-        dob = prefs.getString("profile_dob", "") ?: ""
+        val userId = prefs.getInt("user_id", 0)
+
+        if (userId != 0) {
+            try {
+                val res = repo.getProfile(userId)
+                if (res.status && res.data != null) {
+                    name = res.data.name
+                    email = res.data.email
+                    phone = res.data.phone
+                    dob = res.data.dob
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to load profile", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
-    /* ---------------- UI ---------------- */
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Edit Profile",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                },
+                title = { Text("Edit Profile", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { nav.popBackStack() }) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
+                        Icon(Icons.Default.ArrowBack, null, tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = brown)
@@ -82,11 +82,10 @@ fun EditProfileScreen(nav: NavController) {
                 .padding(padding)
                 .fillMaxSize()
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            /* ---------------- AVATAR ---------------- */
             Box(contentAlignment = Alignment.BottomEnd) {
                 Box(
                     modifier = Modifier
@@ -96,66 +95,68 @@ fun EditProfileScreen(nav: NavController) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = name
-                            .trim()
-                            .takeIf { it.isNotEmpty() }
-                            ?.take(2)
-                            ?.uppercase()
-                            ?: "U",
+                        text = name.takeIf { it.isNotBlank() }?.take(2)?.uppercase() ?: "U",
                         color = Color.White,
                         fontSize = 34.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                        fontWeight = FontWeight.Bold
                     )
                 }
-
                 IconButton(
-                    onClick = { /* image picker later */ },
+                    onClick = {},
                     modifier = Modifier
-                        .offset(x = (-4).dp, y = (-4).dp)
                         .size(36.dp)
                         .clip(CircleShape)
                         .background(cream)
                 ) {
-                    Icon(
-                        Icons.Default.CameraAlt,
-                        contentDescription = "Change photo",
-                        tint = brown
-                    )
+                    Icon(Icons.Default.CameraAlt, null, tint = brown)
                 }
             }
 
-            Spacer(Modifier.height(6.dp))
-
-            /* ---------------- INPUT FIELDS ---------------- */
             EditField("Full Name", name) { name = it }
             EditField("Email", email) { email = it }
             EditField("Phone Number", phone) { phone = it }
-            EditField("Date of Birth", dob) { dob = it }
+            EditField("Date of Birth (YYYY-MM-DD)", dob) { dob = it }
 
-            Spacer(Modifier.height(14.dp))
-
-            /* ---------------- SAVE BUTTON ---------------- */
             Button(
-                onClick = {
-                    isSaving = true
-
-                    prefs.edit()
-                        .putString("profile_name", name)
-                        .putString("profile_email", email)
-                        .putString("profile_phone", phone)
-                        .putString("profile_dob", dob)
-                        .apply()
-
-                    Toast.makeText(context, "Profile updated", Toast.LENGTH_SHORT).show()
-                    isSaving = false
-                    nav.popBackStack()
-                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
                 enabled = !isSaving,
-                colors = ButtonDefaults.buttonColors(containerColor = brown)
+                colors = ButtonDefaults.buttonColors(containerColor = brown),
+                onClick = {
+                    val userId = prefs.getInt("user_id", 0)
+                    if (userId == 0) {
+                        Toast.makeText(context, "User not found", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
+                    isSaving = true
+                    scope.launch {
+                        try {
+                            val res = repo.updateProfile(
+                                userId, name, email, phone, dob
+                            )
+
+                            if (res.status) {
+                                prefs.edit()
+                                    .putString("profile_name", name)
+                                    .putString("profile_email", email)
+                                    .putString("profile_phone", phone)
+                                    .putString("profile_dob", dob)
+                                    .apply()
+
+                                Toast.makeText(context, "Profile updated", Toast.LENGTH_SHORT).show()
+                                nav.popBackStack()
+                            } else {
+                                Toast.makeText(context, "Update failed", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show()
+                        } finally {
+                            isSaving = false
+                        }
+                    }
+                }
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
@@ -164,27 +165,17 @@ fun EditProfileScreen(nav: NavController) {
                         modifier = Modifier.size(22.dp)
                     )
                 } else {
-                    Icon(Icons.Default.Save, contentDescription = null, tint = Color.White)
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        "Save Changes",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Icon(Icons.Default.Save, null, tint = Color.White)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Save Changes", color = Color.White)
                 }
             }
         }
     }
 }
 
-/* ---------------- INPUT FIELD ---------------- */
 @Composable
-fun EditField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit
-) {
+fun EditField(label: String, value: String, onValueChange: (String) -> Unit) {
     val brown = Color(0xFF5C4033)
 
     OutlinedTextField(
@@ -192,8 +183,8 @@ fun EditField(
         onValueChange = onValueChange,
         label = { Text(label) },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
         singleLine = true,
+        shape = RoundedCornerShape(18.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = brown,
             unfocusedBorderColor = brown.copy(alpha = 0.4f),

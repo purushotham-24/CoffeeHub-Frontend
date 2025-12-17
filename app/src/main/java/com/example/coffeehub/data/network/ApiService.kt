@@ -1,4 +1,6 @@
 package com.example.coffeehub.data.network
+import com.example.coffeehub.data.model.ProfileResponse
+import com.example.coffeehub.data.model.UpdateProfileResponse
 
 import com.example.coffeehub.data.model.ApiResponse
 import retrofit2.http.Body
@@ -25,4 +27,16 @@ interface ApiService {
     suspend fun resetPassword(
         @Body body: Map<String, String>
     ): ApiResponse<Any>
+
+    // ---------- PROFILE ----------
+    @POST("profile/get_profile.php")
+    suspend fun getProfile(
+        @Body body: Map<String, Int>
+    ): ProfileResponse
+
+    @POST("profile/update_profile.php")
+    suspend fun updateProfile(
+        @Body body: Map<String, String>
+    ): UpdateProfileResponse
+
 }
