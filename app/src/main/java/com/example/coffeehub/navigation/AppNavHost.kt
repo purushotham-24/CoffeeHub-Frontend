@@ -1,4 +1,5 @@
 package com.example.coffeehub.navigation
+import com.example.coffeehub.screens.auth.ResetPasswordOtp
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
@@ -77,6 +78,12 @@ fun AppNavHost() {
         composable("login") { Login(nav) }
         composable("register") { Register(nav) }
         composable("forgot-password") { ForgotPassword(nav) }
+        composable("reset_password/{email}") { entry ->
+            ResetPasswordOtp(
+                nav = nav,
+                email = entry.arguments?.getString("email") ?: ""
+            )
+        }
 
         // HOME
         composable("home") { HomeScreen(nav) }

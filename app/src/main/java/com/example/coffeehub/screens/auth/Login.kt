@@ -1,16 +1,12 @@
 package com.example.coffeehub.screens.auth
 
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,19 +14,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import kotlinx.coroutines.*
+import com.example.coffeehub.data.repository.AuthRepository
+import kotlinx.coroutines.launch
 
 @Composable
 fun Login(nav: NavController) {
 
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("coffeehub_prefs", Context.MODE_PRIVATE)
+    val scope = rememberCoroutineScope()
 
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
@@ -53,11 +50,13 @@ fun Login(nav: NavController) {
 
     fun signIn() {
         errorMsg = ""
+        val cleanEmail = email.trim()
 
-        if (email.isBlank()) {
+        if (cleanEmail.isBlank()) {
             errorMsg = "Enter Email"
             return
         }
+
         if (password.length < 6) {
             errorMsg = "Password must be 6+ characters"
             return
@@ -65,16 +64,27 @@ fun Login(nav: NavController) {
 
         isLoading = true
 
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(800)
-            isLoading = false
+        scope.launch {
+            try {
+                val res = AuthRepository().login(cleanEmail, password)
 
-            saveCredentials()
+                if (res.status && res.data != null) {
+                    val userId = (res.data["user_id"] as Number).toInt()
 
-            Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+                    prefs.edit().putInt("user_id", userId).apply()
+                    saveCredentials()
 
-            nav.navigate("home") {
-                popUpTo("login") { inclusive = true }
+                    nav.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                } else {
+                    errorMsg = res.message
+                }
+
+            } catch (e: Exception) {
+                errorMsg = "Network error. Try again."
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -99,67 +109,64 @@ fun Login(nav: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                Text("Welcome Back ☕", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = brown)
+                Text("Welcome Back ☕", fontSize = 28.sp, color = brown)
                 Text("Sign in to continue", fontSize = 14.sp, color = Color.Gray)
 
                 Spacer(Modifier.height(25.dp))
 
-                // ------- EMAIL -------
+                // EMAIL
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
-                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Default.Email, null) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(Modifier.height(14.dp))
 
-                // ------- PASSWORD -------
+                // PASSWORD
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("Password") },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Default.Lock, null) },
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
-                                if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = null
+                                if (passwordVisible)
+                                    Icons.Filled.VisibilityOff
+                                else
+                                    Icons.Filled.Visibility,
+                                null
                             )
                         }
                     },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    visualTransformation =
+                        if (passwordVisible) VisualTransformation.None
+                        else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(Modifier.height(8.dp))
-
                 if (errorMsg.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
                     Text(errorMsg, color = Color.Red, fontSize = 13.sp)
                 }
 
                 Spacer(Modifier.height(10.dp))
 
+                // ✅ FORGOT PASSWORD (ADDED)
                 Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
                 ) {
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = rememberMe,
-                            onCheckedChange = { rememberMe = it },
-                            colors = CheckboxDefaults.colors(checkedColor = brown)
-                        )
-                        Text("Remember Me", color = Color.Gray)
-                    }
-
                     Text(
-                        "Forgot Password?",
+                        text = "Forgot Password?",
                         color = brown,
-                        modifier = Modifier.clickable { nav.navigate("forgot-password") }
+                        fontSize = 14.sp,
+                        modifier = Modifier.clickable {
+                            nav.navigate("forgot-password")
+                        }
                     )
                 }
 
@@ -176,9 +183,9 @@ fun Login(nav: NavController) {
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
                             color = Color.White,
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
                         )
                         Spacer(Modifier.width(12.dp))
                         Text("Signing in...", color = Color.White)
@@ -194,8 +201,9 @@ fun Login(nav: NavController) {
                     Text(
                         "Sign Up",
                         color = brown,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { nav.navigate("register") }
+                        modifier = Modifier.clickable {
+                            nav.navigate("register")
+                        }
                     )
                 }
             }

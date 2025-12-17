@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -23,12 +21,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun ForgotPassword(nav: NavController) {
+fun ResetPasswordOtp(
+    nav: NavController,
+    email: String
+) {
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var email by remember { mutableStateOf("") }
+    var otp by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf("") }
 
@@ -37,7 +39,7 @@ fun ForgotPassword(nav: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Forgot Password", color = Color.White) },
+                title = { Text("Reset Password", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { nav.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, null, tint = Color.White)
@@ -53,25 +55,29 @@ fun ForgotPassword(nav: NavController) {
                 .padding(pad)
                 .padding(24.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
 
             Text(
-                text = "Enter your registered email to receive OTP",
-                fontSize = 14.sp,
+                text = "OTP sent to $email",
+                fontSize = 13.sp,
                 color = Color.Gray
             )
 
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                leadingIcon = {
-                    Icon(Icons.Default.Email, null)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                value = otp,
+                onValueChange = { otp = it },
+                label = { Text("OTP") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("New Password") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
             )
 
             if (errorMsg.isNotEmpty()) {
@@ -85,10 +91,9 @@ fun ForgotPassword(nav: NavController) {
                 colors = ButtonDefaults.buttonColors(containerColor = brown),
                 enabled = !isLoading,
                 onClick = {
-                    val cleanEmail = email.trim()
 
-                    if (cleanEmail.isBlank()) {
-                        errorMsg = "Email required"
+                    if (otp.isBlank() || password.isBlank()) {
+                        errorMsg = "All fields required"
                         return@Button
                     }
 
@@ -98,17 +103,23 @@ fun ForgotPassword(nav: NavController) {
                     scope.launch(Dispatchers.IO) {
                         try {
                             val res =
-                                AuthRepository().forgotPassword(cleanEmail)
+                                AuthRepository().resetPassword(
+                                    email = email,
+                                    otp = otp,
+                                    password = password
+                                )
 
                             withContext(Dispatchers.Main) {
                                 if (res.status) {
                                     Toast.makeText(
                                         context,
-                                        "OTP sent to your email",
+                                        "Password updated successfully",
                                         Toast.LENGTH_LONG
                                     ).show()
 
-                                    nav.navigate("reset_password/$cleanEmail")
+                                    nav.navigate("login") {
+                                        popUpTo(0)
+                                    }
                                 } else {
                                     errorMsg = res.message
                                 }
@@ -132,7 +143,7 @@ fun ForgotPassword(nav: NavController) {
                         modifier = Modifier.size(22.dp)
                     )
                 } else {
-                    Text("Send OTP", color = Color.White)
+                    Text("Reset Password", color = Color.White)
                 }
             }
         }

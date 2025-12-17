@@ -1,138 +1,184 @@
 package com.example.coffeehub.screens.auth
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import kotlinx.coroutines.*
+import com.example.coffeehub.data.repository.AuthRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun Register(nav: NavController) {
 
-    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
     var isLoading by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf("") }
 
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
 
-    // Strong password rule
-    val passwordPattern = Regex("^(?=.*[A-Z])(?=.*[0-9])(?=.*[@#\$%^&+=!]).{8,}$")
+    val passwordPattern =
+        Regex("^(?=.*[A-Z])(?=.*[0-9])(?=.*[@#\$%^&+=!]).{8,}$")
 
-    Column(
-        Modifier
+    Box(
+        modifier = Modifier
             .fillMaxSize()
-            .padding(26.dp)
+            .background(Brush.verticalGradient(listOf(cream, brown))),
+        contentAlignment = Alignment.Center
     ) {
 
-        Text("Create Account", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = brown)
-        Spacer(Modifier.height(30.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(26.dp),
+            shape = RoundedCornerShape(26.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
 
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            placeholder = { Text("Full Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
+            Column(
+                modifier = Modifier.padding(28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
 
-        Spacer(Modifier.height(15.dp))
+                Text("Create Account", fontSize = 28.sp, color = brown)
 
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            placeholder = { Text("Email Address") },
-            modifier = Modifier.fillMaxWidth()
-        )
+                Spacer(Modifier.height(24.dp))
 
-        Spacer(Modifier.height(15.dp))
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    placeholder = { Text("Full Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            placeholder = { Text("Create Password") },
-            modifier = Modifier.fillMaxWidth()
-        )
+                Spacer(Modifier.height(14.dp))
 
-        if (errorMsg.isNotEmpty()) {
-            Spacer(Modifier.height(10.dp))
-            Text(errorMsg, color = Color.Red, fontSize = 13.sp)
-        }
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = { Text("Email Address") },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-        Spacer(Modifier.height(28.dp))
+                Spacer(Modifier.height(14.dp))
 
-        Button(
-            onClick = {
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = { Text("Create Password") },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                // VALIDATION
-                when {
-                    name.isBlank() ->
-                        errorMsg = "Enter Name"
+                if (errorMsg.isNotEmpty()) {
+                    Spacer(Modifier.height(10.dp))
+                    Text(errorMsg, color = Color.Red, fontSize = 13.sp)
+                }
 
-                    !email.contains("@") ->
-                        errorMsg = "Invalid Email"
+                Spacer(Modifier.height(26.dp))
 
-                    !passwordPattern.matches(password) ->
-                        errorMsg = "Weak Password (Must include A-Z, 0-9 & symbol)"
+                Button(
+                    onClick = {
+                        val cleanName = name.trim()
+                        val cleanEmail = email.trim()
 
-                    else -> {
-                        errorMsg = ""
-                        isLoading = true
+                        when {
+                            cleanName.isBlank() ->
+                                errorMsg = "Enter Name"
 
-                        // Simulate registration API (offline)
-                        CoroutineScope(Dispatchers.Main).launch {
-                            delay(1200)
-                            isLoading = false
+                            !Regex("^[A-Za-z]+( [A-Za-z]+)*$")
+                                .matches(cleanName) ->
+                                errorMsg = "Name must contain only letters"
 
-                            Toast.makeText(context, "Account Created!", Toast.LENGTH_SHORT).show()
+                            !Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")
+                                .matches(cleanEmail) ->
+                                errorMsg = "Invalid Email"
 
-                            // Navigate to Login
-                            nav.navigate("login") {
-                                popUpTo("register") { inclusive = true }
+                            !passwordPattern.matches(password) ->
+                                errorMsg = "Weak Password (Use A-Z, 0-9 & symbol)"
+
+                            else -> {
+                                errorMsg = ""
+                                isLoading = true
+
+                                scope.launch(Dispatchers.IO) {
+                                    try {
+                                        val res = AuthRepository().register(
+                                            name = cleanName,
+                                            email = cleanEmail,
+                                            password = password,
+                                            phone = "",
+                                            dob = ""
+                                        )
+
+                                        withContext(Dispatchers.Main) {
+                                            if (res.status) {
+                                                nav.navigate("login") {
+                                                    popUpTo("register") { inclusive = true }
+                                                }
+                                            } else {
+                                                errorMsg = res.message
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        withContext(Dispatchers.Main) {
+                                            errorMsg = "Network error. Try again."
+                                        }
+                                    } finally {
+                                        withContext(Dispatchers.Main) {
+                                            isLoading = false
+                                        }
+                                    }
+                                }
                             }
                         }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    enabled = !isLoading,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = brown)
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else {
+                        Text("Create Account", color = Color.White, fontSize = 17.sp)
                     }
                 }
 
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(55.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(brown)
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp)
-            } else {
-                Text("Create Account", color = Color.White, fontSize = 17.sp)
-            }
-        }
+                Spacer(Modifier.height(16.dp))
 
-        Spacer(Modifier.height(18.dp))
-
-        Row {
-            Text("Already have an account? ", fontSize = 15.sp, color = Color.Gray)
-            Text(
-                "Login",
-                color = brown,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable {
-                    nav.navigate("login")
+                Row {
+                    Text("Already have an account? ", color = Color.Gray)
+                    Text(
+                        "Login",
+                        color = brown,
+                        modifier = Modifier.clickable {
+                            nav.navigate("login")
+                        }
+                    )
                 }
-            )
+            }
         }
     }
 }
