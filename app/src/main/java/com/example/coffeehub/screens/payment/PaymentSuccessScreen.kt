@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.coffeehub.cart.CartManager
 import com.example.coffeehub.screens.tracking.OrderTrackingManager
+import com.example.coffeehub.screens.orders.OrderHistoryManager
 
 @Composable
 fun PaymentSuccessScreen(nav: NavController) {
@@ -38,7 +39,6 @@ fun PaymentSuccessScreen(nav: NavController) {
 
         Spacer(Modifier.height(18.dp))
 
-        // ✅ SUCCESS ICON
         Box(
             modifier = Modifier
                 .size(110.dp)
@@ -46,7 +46,7 @@ fun PaymentSuccessScreen(nav: NavController) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.CheckCircle,
+                Icons.Default.CheckCircle,
                 contentDescription = null,
                 tint = successGreen,
                 modifier = Modifier.size(80.dp)
@@ -73,7 +73,6 @@ fun PaymentSuccessScreen(nav: NavController) {
 
         Spacer(Modifier.height(26.dp))
 
-        // ✅ PAYMENT DETAILS CARD
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -82,12 +81,7 @@ fun PaymentSuccessScreen(nav: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Text(
-                text = "Amount Paid",
-                color = Color.Gray,
-                fontSize = 12.sp
-            )
-
+            Text("Amount Paid", color = Color.Gray, fontSize = 12.sp)
             Spacer(Modifier.height(4.dp))
 
             Text(
@@ -110,13 +104,12 @@ fun PaymentSuccessScreen(nav: NavController) {
 
         Spacer(Modifier.height(30.dp))
 
-        // ✅ ACTION BUTTONS (POLISHED)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            // 🔹 BACK TO HOME
+            // 🔹 HOME
             OutlinedButton(
                 modifier = Modifier
                     .weight(1f)
@@ -124,18 +117,21 @@ fun PaymentSuccessScreen(nav: NavController) {
                 shape = RoundedCornerShape(12.dp),
                 border = ButtonDefaults.outlinedButtonBorder,
                 onClick = {
+
+                    // ✅ SAVE ORDER (SAFE)
+                    OrderHistoryManager.addOrder(
+                        id = "#ORD${System.currentTimeMillis().toString().takeLast(6)}",
+                        items = 0,
+                        total = CartManager.totalAmount
+                    )
+
                     CartManager.clear()
                     nav.navigate("home") {
                         popUpTo("payment") { inclusive = true }
                     }
                 }
             ) {
-                Text(
-                    text = "Home",
-                    color = brown,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Text("Home", color = brown, fontSize = 12.sp, fontWeight = FontWeight.Medium)
             }
 
             // 🔹 TRACK ORDER
@@ -146,9 +142,15 @@ fun PaymentSuccessScreen(nav: NavController) {
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = brown),
                 onClick = {
-                    CartManager.clear()
 
-                    // 🔥 START ORDER TRACKING
+                    // ✅ SAVE ORDER (SAFE)
+                    OrderHistoryManager.addOrder(
+                        id = "#ORD${System.currentTimeMillis().toString().takeLast(6)}",
+                        items = 0,
+                        total = CartManager.totalAmount
+                    )
+
+                    CartManager.clear()
                     OrderTrackingManager.reset()
                     OrderTrackingManager.startTracking()
 
@@ -157,12 +159,7 @@ fun PaymentSuccessScreen(nav: NavController) {
                     }
                 }
             ) {
-                Text(
-                    text = "Track Order",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Text("Track Order", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
             }
         }
 
@@ -181,16 +178,7 @@ fun PaymentInfoRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = label,
-            color = Color.Gray,
-            fontSize = 12.sp
-        )
-        Text(
-            text = value,
-            color = color,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold
-        )
+        Text(label, color = Color.Gray, fontSize = 12.sp)
+        Text(value, color = color, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
     }
 }
