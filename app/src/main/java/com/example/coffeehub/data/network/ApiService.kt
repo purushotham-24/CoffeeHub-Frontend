@@ -3,10 +3,12 @@ package com.example.coffeehub.data.network
 import com.example.coffeehub.data.model.ApiResponse
 import com.example.coffeehub.data.model.ProfileResponse
 import com.example.coffeehub.data.model.UpdateProfileResponse
+import com.example.coffeehub.data.model.PlaceOrderRequest
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
+import retrofit2.http.Headers
 
 interface ApiService {
 
@@ -58,9 +60,10 @@ interface ApiService {
 
     /* ---------------- ORDERS ---------------- */
 
-    @POST("orders/place_order.php") // ✅ FIXED
+    @Headers("Content-Type: application/json")
+    @POST("orders/place_order.php")
     suspend fun placeOrder(
-        @Body body: Map<String, Any>
+        @Body body: PlaceOrderRequest
     ): ApiResponse<Any>
 
     @GET("orders/order_history.php")

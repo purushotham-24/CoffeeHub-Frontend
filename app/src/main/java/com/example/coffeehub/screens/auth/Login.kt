@@ -1,3 +1,4 @@
+
 package com.example.coffeehub.screens.auth
 
 import android.content.Context
@@ -148,6 +149,19 @@ fun Login(nav: NavController) {
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // 🔹 REMEMBER ME (ADDED)
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = rememberMe,
+                        onCheckedChange = { rememberMe = it }
+                    )
+                    Text("Remember Me", fontSize = 14.sp, color = Color.Gray)
+                }
+
                 if (errorMsg.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     Text(errorMsg, color = Color.Red, fontSize = 13.sp)
@@ -155,7 +169,7 @@ fun Login(nav: NavController) {
 
                 Spacer(Modifier.height(10.dp))
 
-                // ✅ FORGOT PASSWORD (ADDED)
+                // FORGOT PASSWORD
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End

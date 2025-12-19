@@ -7,6 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
+    // ✅ CORRECT for your folder structure
     private const val BASE_URL = "http://10.208.2.9/CoffeeHub/"
 
     private val logger = HttpLoggingInterceptor().apply {

@@ -1,5 +1,6 @@
 package com.example.coffeehub.data.repository
 
+import com.example.coffeehub.data.model.PlaceOrderRequest
 import com.example.coffeehub.data.network.RetrofitClient
 
 class OrderRepository {
@@ -11,12 +12,12 @@ class OrderRepository {
         total: Int,
         status: String = "Completed"
     ) = RetrofitClient.api.placeOrder(
-        mapOf(
-            "user_id" to userId,
-            "order_id" to orderId,
-            "items" to items,
-            "total" to total,
-            "status" to status
+        PlaceOrderRequest(
+            user_id = userId,
+            order_id = orderId,
+            items = items,
+            total = total,
+            status = status
         )
     )
 
