@@ -1,12 +1,16 @@
 package com.example.coffeehub.data.network
-import com.example.coffeehub.data.model.ProfileResponse
-import com.example.coffeehub.data.model.UpdateProfileResponse
 
 import com.example.coffeehub.data.model.ApiResponse
+import com.example.coffeehub.data.model.ProfileResponse
+import com.example.coffeehub.data.model.UpdateProfileResponse
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface ApiService {
+
+    /* ---------------- AUTH ---------------- */
 
     @POST("auth/login.php")
     suspend fun login(
@@ -28,7 +32,8 @@ interface ApiService {
         @Body body: Map<String, String>
     ): ApiResponse<Any>
 
-    // ---------- PROFILE ----------
+    /* ---------------- PROFILE ---------------- */
+
     @POST("profile/get_profile.php")
     suspend fun getProfile(
         @Body body: Map<String, Int>
@@ -39,4 +44,27 @@ interface ApiService {
         @Body body: Map<String, String>
     ): UpdateProfileResponse
 
+    /* ---------------- NOTIFICATIONS ---------------- */
+
+    @POST("notifications/get_notifications.php")
+    suspend fun getNotifications(
+        @Body body: Map<String, Int>
+    ): ApiResponse<List<Map<String, Any>>>
+
+    @POST("notifications/clear_all.php")
+    suspend fun clearAllNotifications(
+        @Body body: Map<String, Int>
+    ): ApiResponse<Any>
+
+    /* ---------------- ORDERS ---------------- */
+
+    @POST("orders/place_order.php") // ✅ FIXED
+    suspend fun placeOrder(
+        @Body body: Map<String, Any>
+    ): ApiResponse<Any>
+
+    @GET("orders/order_history.php")
+    suspend fun getOrderHistory(
+        @Query("user_id") userId: Int
+    ): ApiResponse<List<Map<String, Any>>>
 }
