@@ -21,10 +21,10 @@ import com.example.coffeehub.screens.home.components.HeaderBar
 @Composable
 fun SeatLayoutMap(nav: NavController) {
 
-    // ✅ LOCAL UI STATE
+    // 🔹 LOCAL SELECTION STATE
     var selectedSeats by remember { mutableStateOf(setOf<String>()) }
 
-    // ✅ DYNAMIC SEATS (NO DUMMY)
+    // 🔹 DYNAMIC SEATS
     val seats = SeatManager.seats
 
     Column(
@@ -49,7 +49,7 @@ fun SeatLayoutMap(nav: NavController) {
 
             Spacer(Modifier.height(22.dp))
 
-            // 🪑 SEAT GRID (UNCHANGED LOGIC)
+            // 🪑 SEAT GRID
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 seats.chunked(4).forEach { row ->
                     Row(
@@ -94,7 +94,7 @@ fun SeatLayoutMap(nav: NavController) {
 
                                 if (isSelected) {
                                     Icon(
-                                        imageVector = Icons.Default.Check,
+                                        Icons.Default.Check,
                                         contentDescription = null,
                                         tint = Color.White,
                                         modifier = Modifier
@@ -128,7 +128,7 @@ fun SeatLayoutMap(nav: NavController) {
 
         Spacer(Modifier.weight(1f))
 
-        // 🔘 CONFIRM BUTTON (UNCHANGED)
+        // 🔘 CONFIRM BUTTON
         Button(
             onClick = {
                 BookingManager.bookingType.value = "seat"

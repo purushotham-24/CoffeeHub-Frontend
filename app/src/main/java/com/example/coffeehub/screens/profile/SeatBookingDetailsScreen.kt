@@ -16,8 +16,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.coffeehub.screens.booking.BookingHistoryManager
 import com.example.coffeehub.screens.booking.BookingHistory
+import com.example.coffeehub.screens.booking.BookingHistoryManager
+import com.example.coffeehub.screens.booking.SeatManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,7 +26,6 @@ fun SeatBookingDetailsScreen(nav: NavController) {
 
     val brown = Color(0xFF5C4033)
 
-    // Dialog state
     var showCancelDialog by remember { mutableStateOf(false) }
     var selectedBooking by remember { mutableStateOf<BookingHistory?>(null) }
 
@@ -50,7 +50,6 @@ fun SeatBookingDetailsScreen(nav: NavController) {
         }
     ) { padding ->
 
-        // ---------- EMPTY STATE ----------
         if (BookingHistoryManager.bookings.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -59,15 +58,10 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                     .background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "No bookings yet",
-                    fontSize = 18.sp,
-                    color = Color.Gray
-                )
+                Text("No bookings yet", fontSize = 18.sp, color = Color.Gray)
             }
         } else {
 
-            // ---------- BOOKINGS LIST ----------
             LazyColumn(
                 modifier = Modifier
                     .padding(padding)
@@ -78,7 +72,7 @@ fun SeatBookingDetailsScreen(nav: NavController) {
 
                 items(
                     items = BookingHistoryManager.bookings,
-                    key = { it.hashCode() } // prevents recomposition bugs
+                    key = { it.id }
                 ) { booking ->
 
                     Card(
@@ -94,7 +88,6 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
 
-                            // ---------- TITLE ----------
                             Text(
                                 text = if (booking.type == "seat")
                                     "Seat Reservation"
@@ -105,9 +98,13 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                                 color = brown
                             )
 
-                            // ---------- LOCATION ----------
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.LocationOn, null, tint = brown, modifier = Modifier.size(20.dp))
+                                Icon(
+                                    Icons.Default.LocationOn,
+                                    null,
+                                    tint = brown,
+                                    modifier = Modifier.size(20.dp)
+                                )
                                 Spacer(Modifier.width(8.dp))
                                 Text(booking.title, fontSize = 14.sp, color = Color.DarkGray)
                             }
@@ -117,14 +114,12 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                             BookingInfoRow(Icons.Default.CalendarToday, "Date", booking.date)
                             BookingInfoRow(Icons.Default.Schedule, "Time", booking.time)
 
-                            // ---------- CANCEL POLICY ----------
                             Text(
                                 "Free cancellation before booking time · ₹0 charges",
                                 fontSize = 12.sp,
                                 color = Color(0xFF2E7D32)
                             )
 
-                            // ---------- CANCEL BUTTON ----------
                             OutlinedButton(
                                 onClick = {
                                     selectedBooking = booking
@@ -132,9 +127,7 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(50),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color.Red
-                                )
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)
                             ) {
                                 Icon(Icons.Default.Cancel, null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
@@ -147,13 +140,11 @@ fun SeatBookingDetailsScreen(nav: NavController) {
         }
     }
 
-    // ---------- CANCEL CONFIRMATION DIALOG ----------
+    /* ---------- CANCEL CONFIRMATION ---------- */
     if (showCancelDialog && selectedBooking != null) {
         AlertDialog(
             onDismissRequest = { showCancelDialog = false },
-            title = {
-                Text("Cancel Booking?")
-            },
+            title = { Text("Cancel Booking?") },
             text = {
                 Text(
                     "You can cancel this booking now with ₹0 charges.\n\n" +
@@ -163,7 +154,20 @@ fun SeatBookingDetailsScreen(nav: NavController) {
             confirmButton = {
                 TextButton(
                     onClick = {
+
+                        // ✅ FREE SEATS IF SEAT BOOKING
+                        if (selectedBooking!!.type == "seat") {
+                            val seatIds = selectedBooking!!.title
+                                .replace("Seats:", "")
+                                .split(",")
+                                .map { it.trim() }
+
+                            SeatManager.freeSeats(seatIds)
+                        }
+
+                        // ✅ REMOVE BOOKING
                         BookingHistoryManager.bookings.remove(selectedBooking)
+
                         selectedBooking = null
                         showCancelDialog = false
                     }
