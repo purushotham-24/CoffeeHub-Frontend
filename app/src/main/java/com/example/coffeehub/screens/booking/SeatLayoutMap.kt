@@ -24,13 +24,8 @@ fun SeatLayoutMap(nav: NavController) {
     // ✅ LOCAL UI STATE
     var selectedSeats by remember { mutableStateOf(setOf<String>()) }
 
-    // 🪑 STATIC SEAT MAP (can come from backend later)
-    val seats = listOf(
-        "A1" to "available", "A2" to "available", "A3" to "occupied", "A4" to "available",
-        "B1" to "available", "B2" to "occupied", "B3" to "available", "B4" to "available",
-        "C1" to "occupied", "C2" to "available", "C3" to "available", "C4" to "occupied",
-        "D1" to "available", "D2" to "available", "D3" to "available", "D4" to "available"
-    )
+    // ✅ DYNAMIC SEATS (NO DUMMY)
+    val seats = SeatManager.seats
 
     Column(
         modifier = Modifier
@@ -38,12 +33,10 @@ fun SeatLayoutMap(nav: NavController) {
             .background(Color.White)
     ) {
 
-        // 🔝 HEADER
         HeaderBar(title = "Select Your Seats", showBack = true, nav = nav)
 
         Column(Modifier.padding(20.dp)) {
 
-            // 🚪 Entrance
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -56,17 +49,17 @@ fun SeatLayoutMap(nav: NavController) {
 
             Spacer(Modifier.height(22.dp))
 
-            // 🪑 SEAT GRID
+            // 🪑 SEAT GRID (UNCHANGED LOGIC)
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 seats.chunked(4).forEach { row ->
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        row.forEach { (seatId, status) ->
+                        row.forEach { seat ->
 
-                            val isOccupied = status == "occupied"
-                            val isSelected = selectedSeats.contains(seatId)
+                            val isOccupied = seat.status == "occupied"
+                            val isSelected = selectedSeats.contains(seat.id)
 
                             Box(
                                 modifier = Modifier
@@ -82,15 +75,15 @@ fun SeatLayoutMap(nav: NavController) {
                                     .clickable(enabled = !isOccupied) {
                                         selectedSeats =
                                             if (isSelected)
-                                                selectedSeats - seatId
+                                                selectedSeats - seat.id
                                             else
-                                                selectedSeats + seatId
+                                                selectedSeats + seat.id
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
 
                                 Text(
-                                    seatId,
+                                    seat.id,
                                     color = when {
                                         isOccupied -> Color.Gray
                                         isSelected -> Color.White
@@ -135,13 +128,11 @@ fun SeatLayoutMap(nav: NavController) {
 
         Spacer(Modifier.weight(1f))
 
-        // 🔘 CONFIRM BUTTON
+        // 🔘 CONFIRM BUTTON (UNCHANGED)
         Button(
             onClick = {
-                // ✅ SAVE INTO GLOBAL MANAGER
                 BookingManager.bookingType.value = "seat"
                 BookingManager.selectedSeats.value = selectedSeats.toList()
-
                 nav.navigate("datetime")
             },
             enabled = selectedSeats.isNotEmpty(),

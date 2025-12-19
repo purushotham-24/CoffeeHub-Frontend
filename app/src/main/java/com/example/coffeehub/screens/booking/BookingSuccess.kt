@@ -22,45 +22,37 @@ import com.example.coffeehub.screens.home.NotificationManager
 fun BookingSuccess(nav: NavController) {
 
     val brown = Color(0xFF5C4033)
-    val isSeat = BookingManager.bookingType.value == "seat"
+    val isSeatBooking = BookingManager.bookingType.value == "seat"
 
-    /* ✅ STABLE UNIQUE KEY — CORE FIX */
-    val bookingKey = remember {
-        buildString {
-            append(BookingManager.bookingType.value)
-            append("|")
-            append(BookingManager.workspaceId.value ?: "")
-            append("|")
-            append(BookingManager.selectedSeats.value.joinToString(","))
-            append("|")
-            append(BookingManager.selectedDate.value)
-            append("|")
-            append(BookingManager.selectedTime.value)
-        }
-    }
+    /* 🔐 LOCK SEATS + SAVE BOOKING ONLY ONCE */
+    LaunchedEffect(Unit) {
 
-    /* ✅ ADD BOOKING + NOTIFICATION ONLY ONCE */
-    LaunchedEffect(bookingKey) {
-
-        // 🔒 HARD SAFETY (NO DUMMY BOOKINGS)
+        // ❌ HARD SAFETY — PREVENT DUMMY BOOKINGS
         if (
             BookingManager.selectedDate.value.isBlank() ||
             BookingManager.selectedTime.value.isBlank()
         ) return@LaunchedEffect
 
-        if (isSeat && BookingManager.selectedSeats.value.isEmpty()) {
+        if (isSeatBooking && BookingManager.selectedSeats.value.isEmpty()) {
             return@LaunchedEffect
         }
 
         if (
-            !isSeat &&
+            !isSeatBooking &&
             (
                     BookingManager.workspaceId.value.isNullOrBlank() ||
                             BookingManager.workspaceName.value.isNullOrBlank()
                     )
         ) return@LaunchedEffect
 
-        val bookingTitle = if (isSeat)
+        /* 🔒 LOCK SEATS (VERY IMPORTANT) */
+        if (isSeatBooking) {
+            SeatManager.occupySeats(
+                BookingManager.selectedSeats.value
+            )
+        }
+
+        val bookingTitle = if (isSeatBooking)
             "Seats: ${BookingManager.selectedSeats.value.joinToString(", ")}"
         else
             BookingManager.workspaceName.value!!
@@ -89,7 +81,7 @@ fun BookingSuccess(nav: NavController) {
 
         if (!alreadyExists) {
 
-            // ✅ SAVE BOOKING
+            /* ✅ SAVE BOOKING */
             BookingHistoryManager.bookings.add(
                 BookingHistory(
                     type = BookingManager.bookingType.value,
@@ -99,9 +91,9 @@ fun BookingSuccess(nav: NavController) {
                 )
             )
 
-            // ✅ ADD NOTIFICATION
+            /* 🔔 NOTIFICATION */
             NotificationManager.addBookingNotification(
-                title = if (isSeat)
+                title = if (isSeatBooking)
                     "Seat Booking Confirmed"
                 else
                     "Workspace Booking Confirmed",
@@ -174,8 +166,8 @@ fun BookingSuccess(nav: NavController) {
 
                 DetailRow(
                     Icons.Default.LocationOn,
-                    if (isSeat) "Seats" else "Workspace",
-                    if (isSeat)
+                    if (isSeatBooking) "Seats" else "Workspace",
+                    if (isSeatBooking)
                         BookingManager.selectedSeats.value.joinToString(", ")
                     else
                         BookingManager.workspaceName.value ?: ""
