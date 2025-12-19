@@ -24,15 +24,47 @@ fun BookingSuccess(nav: NavController) {
     val brown = Color(0xFF5C4033)
     val isSeat = BookingManager.bookingType.value == "seat"
 
-    /* ✅ ADD BOOKING + NOTIFICATION ONLY ONCE (STRONG DEDUP LOGIC) */
-    LaunchedEffect(Unit) {
+    /* ✅ STABLE UNIQUE KEY — CORE FIX */
+    val bookingKey = remember {
+        buildString {
+            append(BookingManager.bookingType.value)
+            append("|")
+            append(BookingManager.workspaceId.value ?: "")
+            append("|")
+            append(BookingManager.selectedSeats.value.joinToString(","))
+            append("|")
+            append(BookingManager.selectedDate.value)
+            append("|")
+            append(BookingManager.selectedTime.value)
+        }
+    }
+
+    /* ✅ ADD BOOKING + NOTIFICATION ONLY ONCE */
+    LaunchedEffect(bookingKey) {
+
+        // 🔒 HARD SAFETY (NO DUMMY BOOKINGS)
+        if (
+            BookingManager.selectedDate.value.isBlank() ||
+            BookingManager.selectedTime.value.isBlank()
+        ) return@LaunchedEffect
+
+        if (isSeat && BookingManager.selectedSeats.value.isEmpty()) {
+            return@LaunchedEffect
+        }
+
+        if (
+            !isSeat &&
+            (
+                    BookingManager.workspaceId.value.isNullOrBlank() ||
+                            BookingManager.workspaceName.value.isNullOrBlank()
+                    )
+        ) return@LaunchedEffect
 
         val bookingTitle = if (isSeat)
             "Seats: ${BookingManager.selectedSeats.value.joinToString(", ")}"
         else
-            BookingManager.workspaceName.value ?: ""
+            BookingManager.workspaceName.value!!
 
-        // ✅ STRONG UNIQUE SIGNATURE
         val uniqueKey = buildString {
             append(BookingManager.bookingType.value)
             append("|")
@@ -77,6 +109,8 @@ fun BookingSuccess(nav: NavController) {
             )
         }
     }
+
+    /* ================= UI (UNCHANGED) ================= */
 
     Column(
         modifier = Modifier

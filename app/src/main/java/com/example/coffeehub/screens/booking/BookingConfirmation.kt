@@ -29,7 +29,7 @@ fun BookingConfirmation(nav: NavController) {
             .background(Color.White)
     ) {
 
-        // ---------- TOP BAR ----------
+        /* ---------- TOP BAR ---------- */
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -37,13 +37,18 @@ fun BookingConfirmation(nav: NavController) {
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+
+            // ✅ FIX: clear state when going back
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier
                     .size(26.dp)
-                    .clickable { nav.popBackStack() }
+                    .clickable {
+                        BookingManager.clear()   // 🔥 VERY IMPORTANT
+                        nav.popBackStack()
+                    }
             )
 
             Spacer(Modifier.width(12.dp))
@@ -56,7 +61,7 @@ fun BookingConfirmation(nav: NavController) {
             )
         }
 
-        // ---------- CONTENT ----------
+        /* ---------- CONTENT ---------- */
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -64,7 +69,6 @@ fun BookingConfirmation(nav: NavController) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // ---------- MAIN CARD ----------
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
@@ -120,9 +124,34 @@ fun BookingConfirmation(nav: NavController) {
             )
         }
 
-        // ---------- CONFIRM BUTTON ----------
+        /* ---------- CONFIRM BUTTON (FINAL SAFE LOGIC) ---------- */
         Button(
-            onClick = { nav.navigate("booking_success") },
+            onClick = {
+
+                // ✅ Common validation
+                if (
+                    BookingManager.selectedDate.value.isBlank() ||
+                    BookingManager.selectedTime.value.isBlank()
+                ) return@Button
+
+                // ✅ Seat validation
+                if (
+                    isSeatBooking &&
+                    BookingManager.selectedSeats.value.isEmpty()
+                ) return@Button
+
+                // ✅ Workspace validation (KEY FIX)
+                if (
+                    !isSeatBooking &&
+                    (
+                            BookingManager.workspaceId.value.isNullOrBlank() ||
+                                    BookingManager.workspaceName.value.isNullOrBlank()
+                            )
+                ) return@Button
+
+                // ✅ Only REAL bookings reach success screen
+                nav.navigate("booking_success")
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -140,6 +169,7 @@ fun BookingConfirmation(nav: NavController) {
     }
 }
 
+/* ---------- REUSABLE INFO ITEM ---------- */
 @Composable
 fun InfoItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
