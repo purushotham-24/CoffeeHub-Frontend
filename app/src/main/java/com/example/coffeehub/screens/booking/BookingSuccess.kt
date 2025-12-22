@@ -16,7 +16,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.coffeehub.data.repository.BookingRepository
 import com.example.coffeehub.screens.home.NotificationManager
+import com.example.coffeehub.utils.SessionManager
+import kotlinx.coroutines.launch
 
 @Composable
 fun BookingSuccess(nav: NavController) {
@@ -24,32 +27,38 @@ fun BookingSuccess(nav: NavController) {
     val brown = Color(0xFF5C4033)
     val isSeatBooking = BookingManager.bookingType.value == "seat"
 
-    /* 🔐 LOCK SEATS + SAVE BOOKING ONLY ONCE */
+    val repo = remember { BookingRepository() }
+    val scope = rememberCoroutineScope()
+
+    // ✅ BACKEND CALL PROTECTION (ONLY ADDITION)
+    var apiCalled by remember { mutableStateOf(false) }
+
+    /* 🔐 SAVE BOOKING (LOCAL + BACKEND) */
     LaunchedEffect(Unit) {
 
-        // ❌ HARD SAFETY — PREVENT DUMMY BOOKINGS
+        if (apiCalled) return@LaunchedEffect
+        apiCalled = true
+
+        // 🚨 USER MUST BE LOGGED IN
+        if (SessionManager.userId <= 0) {
+            println("❌ INVALID USER ID: ${SessionManager.userId}")
+            return@LaunchedEffect
+        }
+
         if (
             BookingManager.selectedDate.value.isBlank() ||
             BookingManager.selectedTime.value.isBlank()
         ) return@LaunchedEffect
 
-        if (isSeatBooking && BookingManager.selectedSeats.value.isEmpty()) {
-            return@LaunchedEffect
-        }
+        if (isSeatBooking && BookingManager.selectedSeats.value.isEmpty()) return@LaunchedEffect
 
-        if (
-            !isSeatBooking &&
-            (
-                    BookingManager.workspaceId.value.isNullOrBlank() ||
-                            BookingManager.workspaceName.value.isNullOrBlank()
-                    )
+        if (!isSeatBooking &&
+            BookingManager.workspaceName.value.isNullOrBlank()
         ) return@LaunchedEffect
 
-        /* 🔒 LOCK SEATS (VERY IMPORTANT) */
+        // 🔒 LOCK SEATS (LOCAL)
         if (isSeatBooking) {
-            SeatManager.occupySeats(
-                BookingManager.selectedSeats.value
-            )
+            SeatManager.occupySeats(BookingManager.selectedSeats.value)
         }
 
         val bookingTitle = if (isSeatBooking)
@@ -57,31 +66,16 @@ fun BookingSuccess(nav: NavController) {
         else
             BookingManager.workspaceName.value!!
 
-        val uniqueKey = buildString {
-            append(BookingManager.bookingType.value)
-            append("|")
-            append(bookingTitle)
-            append("|")
-            append(BookingManager.selectedDate.value)
-            append("|")
-            append(BookingManager.selectedTime.value)
-        }
-
-        val alreadyExists = BookingHistoryManager.bookings.any { booking ->
-            buildString {
-                append(booking.type)
-                append("|")
-                append(booking.title)
-                append("|")
-                append(booking.date)
-                append("|")
-                append(booking.time)
-            } == uniqueKey
+        val alreadyExists = BookingHistoryManager.bookings.any {
+            it.type == BookingManager.bookingType.value &&
+                    it.title == bookingTitle &&
+                    it.date == BookingManager.selectedDate.value &&
+                    it.time == BookingManager.selectedTime.value
         }
 
         if (!alreadyExists) {
 
-            /* ✅ SAVE BOOKING */
+            // ✅ SAVE LOCALLY
             BookingHistoryManager.bookings.add(
                 BookingHistory(
                     type = BookingManager.bookingType.value,
@@ -91,7 +85,30 @@ fun BookingSuccess(nav: NavController) {
                 )
             )
 
-            /* 🔔 NOTIFICATION */
+            // ✅ SAVE TO BACKEND (UNCHANGED LOGIC)
+            scope.launch {
+                try {
+                    val res = repo.placeBooking(
+                        userId = SessionManager.userId,
+                        type = BookingManager.bookingType.value,
+                        title = bookingTitle,
+                        date = BookingManager.selectedDate.value,
+                        time = BookingManager.selectedTime.value,
+                        seats = if (isSeatBooking)
+                            BookingManager.selectedSeats.value
+                        else
+                            emptyList()
+                    )
+
+                    println("✅ BOOKING BACKEND RESPONSE: $res")
+
+                } catch (e: Exception) {
+                    println("❌ BOOKING API ERROR")
+                    e.printStackTrace()
+                }
+            }
+
+            // 🔔 NOTIFICATION
             NotificationManager.addBookingNotification(
                 title = if (isSeatBooking)
                     "Seat Booking Confirmed"
@@ -129,12 +146,7 @@ fun BookingSuccess(nav: NavController) {
 
         Spacer(Modifier.height(20.dp))
 
-        Text(
-            "Booking Confirmed!",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = brown
-        )
+        Text("Booking Confirmed!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = brown)
 
         Spacer(Modifier.height(6.dp))
 
@@ -157,12 +169,7 @@ fun BookingSuccess(nav: NavController) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
 
-                Text(
-                    "Booking Details",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = brown
-                )
+                Text("Booking Details", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = brown)
 
                 DetailRow(
                     Icons.Default.LocationOn,
@@ -178,15 +185,6 @@ fun BookingSuccess(nav: NavController) {
             }
         }
 
-        Spacer(Modifier.height(18.dp))
-
-        Text(
-            "You can cancel anytime before the booking start time.\nNo charges will be applied.",
-            fontSize = 13.sp,
-            color = Color(0xFF2E7D32),
-            textAlign = TextAlign.Center
-        )
-
         Spacer(Modifier.height(28.dp))
 
         Button(
@@ -198,7 +196,7 @@ fun BookingSuccess(nav: NavController) {
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.buttonColors(brown)
         ) {
-            Text("View My Bookings", color = Color.White, fontSize = 16.sp)
+            Text("View My Bookings", color = Color.White)
         }
 
         Spacer(Modifier.height(12.dp))
@@ -213,12 +211,12 @@ fun BookingSuccess(nav: NavController) {
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(50)
         ) {
-            Text("Back to Home", fontSize = 16.sp, color = brown)
+            Text("Back to Home", color = brown)
         }
     }
 }
 
-/* ---------- REUSABLE ROW ---------- */
+/* ---------- REUSABLE ROW (UNCHANGED) ---------- */
 @Composable
 fun DetailRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,

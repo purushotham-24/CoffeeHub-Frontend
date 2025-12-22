@@ -1,4 +1,3 @@
-
 package com.example.coffeehub.screens.auth
 
 import android.content.Context
@@ -21,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.coffeehub.data.repository.AuthRepository
+import com.example.coffeehub.utils.SessionManager
 import kotlinx.coroutines.launch
 
 @Composable
@@ -70,14 +70,20 @@ fun Login(nav: NavController) {
                 val res = AuthRepository().login(cleanEmail, password)
 
                 if (res.status && res.data != null) {
+
                     val userId = (res.data["user_id"] as Number).toInt()
 
+                    // 🔥 REQUIRED FIX (BACKEND SYNC)
+                    SessionManager.userId = userId
+
+                    // optional persistence
                     prefs.edit().putInt("user_id", userId).apply()
                     saveCredentials()
 
                     nav.navigate("home") {
                         popUpTo("login") { inclusive = true }
                     }
+
                 } else {
                     errorMsg = res.message
                 }
@@ -115,7 +121,6 @@ fun Login(nav: NavController) {
 
                 Spacer(Modifier.height(25.dp))
 
-                // EMAIL
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
@@ -126,7 +131,6 @@ fun Login(nav: NavController) {
 
                 Spacer(Modifier.height(14.dp))
 
-                // PASSWORD
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -149,7 +153,6 @@ fun Login(nav: NavController) {
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // 🔹 REMEMBER ME (ADDED)
                 Spacer(Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -169,7 +172,6 @@ fun Login(nav: NavController) {
 
                 Spacer(Modifier.height(10.dp))
 
-                // FORGOT PASSWORD
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
