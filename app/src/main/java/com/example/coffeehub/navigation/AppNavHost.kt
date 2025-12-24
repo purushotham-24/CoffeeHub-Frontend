@@ -156,12 +156,8 @@ fun AppNavHost() {
 
 
         composable("admin_home") {
-            AdminDashboard()
+            AdminDashboard(nav)
         }
-
-
-
-
 
 
     }
