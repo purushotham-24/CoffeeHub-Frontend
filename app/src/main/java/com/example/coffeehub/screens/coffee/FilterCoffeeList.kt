@@ -67,7 +67,6 @@ fun FilterCoffeeCard(coffee: Coffee, navController: NavController) {
                 Column(Modifier.padding(10.dp)) {
                     Text(coffee.name, style = MaterialTheme.typography.titleMedium)
                     Text("₹${coffee.price}")
-                    Text("⭐ ${coffee.rating}")
                 }
             }
 

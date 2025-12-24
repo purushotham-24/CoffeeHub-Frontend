@@ -80,7 +80,6 @@ fun CoffeeCard(coffee: Coffee, navController: NavController) {
                     Spacer(Modifier.height(4.dp))
                     Text("₹${coffee.price}", style = MaterialTheme.typography.bodyMedium)
                     Spacer(Modifier.height(4.dp))
-                    Text("⭐ ${coffee.rating}", style = MaterialTheme.typography.bodySmall)
                 }
             }
 

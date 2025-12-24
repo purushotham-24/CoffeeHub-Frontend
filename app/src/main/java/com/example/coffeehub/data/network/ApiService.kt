@@ -1,11 +1,12 @@
 package com.example.coffeehub.data.network
 
 import com.example.coffeehub.data.model.*
+import com.example.coffeehub.model.Coffee
 import retrofit2.http.*
 
 interface ApiService {
 
-    /* ---------------- AUTH ---------------- */
+    /* ================= AUTH ================= */
 
     @Headers("Content-Type: application/json")
     @POST("auth/login.php")
@@ -31,7 +32,8 @@ interface ApiService {
         @Body body: Map<String, String>
     ): ApiResponse<Any>
 
-    /* ---------------- PROFILE ---------------- */
+
+    /* ================= PROFILE ================= */
 
     @Headers("Content-Type: application/json")
     @POST("profile/get_profile.php")
@@ -45,7 +47,8 @@ interface ApiService {
         @Body body: Map<String, String>
     ): UpdateProfileResponse
 
-    /* ---------------- NOTIFICATIONS ---------------- */
+
+    /* ================= NOTIFICATIONS ================= */
 
     @Headers("Content-Type: application/json")
     @POST("notifications/get_notifications.php")
@@ -59,7 +62,8 @@ interface ApiService {
         @Body body: Map<String, Int>
     ): ApiResponse<Any>
 
-    /* ---------------- ORDERS ---------------- */
+
+    /* ================= ORDERS ================= */
 
     @Headers("Content-Type: application/json")
     @POST("orders/place_order.php")
@@ -73,7 +77,8 @@ interface ApiService {
         @Query("user_id") userId: Int
     ): ApiResponse<List<Map<String, Any>>>
 
-    /* ---------------- BOOKINGS (FIXED) ---------------- */
+
+    /* ================= BOOKINGS ================= */
 
     @Headers("Content-Type: application/json")
     @POST("bookings/place_booking.php")
@@ -93,9 +98,32 @@ interface ApiService {
         @Body body: Map<String, Int>
     ): ApiResponse<Any>
 
-    /* ---------------- SEATS ---------------- */
+
+    /* ================= SEATS ================= */
 
     @Headers("Content-Type: application/json")
     @GET("bookings/get_seats.php")
     suspend fun getSeats(): ApiResponse<List<Map<String, String>>>
+
+
+    /* ================= COFFEES (NEW) ================= */
+    /* ================= COFFEES ================= */
+
+    @GET("coffees/get_coffees.php")
+    suspend fun getAllCoffees(): List<Coffee>
+
+    @POST("coffees/add_coffee.php")
+    suspend fun addCoffee(@Body coffee: Coffee): ApiResponse<Unit>
+
+    @POST("coffees/update_coffee.php")
+    suspend fun updateCoffee(@Body coffee: Coffee): ApiResponse<Unit>
+
+    @POST("coffees/delete_coffee.php")
+    suspend fun deleteCoffee(
+        @Query("id") id: String
+    ): ApiResponse<Unit>
+
+
+
+
 }

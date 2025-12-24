@@ -58,10 +58,25 @@ fun Login(nav: NavController) {
             return
         }
 
-        if (password.length < 6) {
-            errorMsg = "Password must be 6+ characters"
+        if (password.length < 4) {
+            errorMsg = "Password must be 4+ characters"
             return
         }
+
+        /* ================= ADMIN LOGIN (FIXED) ================= */
+        if (cleanEmail == "coffeehub376@gmail.com" && password == "1234") {
+
+            // Save admin session
+            SessionManager.userId = 0
+            prefs.edit().putInt("user_id", 0).apply()
+            saveCredentials()
+
+            nav.navigate("admin_home") {
+                popUpTo("login") { inclusive = true }
+            }
+            return
+        }
+        /* ======================================================= */
 
         isLoading = true
 
@@ -73,10 +88,7 @@ fun Login(nav: NavController) {
 
                     val userId = (res.data["user_id"] as Number).toInt()
 
-                    // 🔥 REQUIRED FIX (BACKEND SYNC)
                     SessionManager.userId = userId
-
-                    // optional persistence
                     prefs.edit().putInt("user_id", userId).apply()
                     saveCredentials()
 
@@ -154,6 +166,7 @@ fun Login(nav: NavController) {
                 )
 
                 Spacer(Modifier.height(8.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically

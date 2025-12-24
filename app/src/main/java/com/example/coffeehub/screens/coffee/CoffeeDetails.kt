@@ -134,11 +134,7 @@ fun CoffeeDetails(nav: NavController, id: String) {
 
             Spacer(Modifier.height(6.dp))
 
-            Text(
-                text = "⭐ ${coffee.rating}",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
+
 
             Spacer(Modifier.height(20.dp))
 

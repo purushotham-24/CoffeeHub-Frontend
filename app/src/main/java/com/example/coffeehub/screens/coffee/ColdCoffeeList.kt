@@ -77,7 +77,6 @@ fun ColdCoffeeCard(coffee: Coffee, navController: NavController) {
                     Spacer(Modifier.height(4.dp))
                     Text("₹${coffee.price}")
                     Spacer(Modifier.height(4.dp))
-                    Text("⭐ ${coffee.rating}")
                 }
             }
 

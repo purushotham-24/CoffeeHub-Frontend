@@ -62,6 +62,7 @@ fun CappuccinoCard(coffee: Coffee, navController: NavController) {
         Box {
             Column {
 
+                // ✅ FIXED IMAGE FIELD
                 AsyncImage(
                     model = coffee.image,
                     contentDescription = coffee.name,
@@ -79,11 +80,9 @@ fun CappuccinoCard(coffee: Coffee, navController: NavController) {
                     Text("₹${coffee.price}", style = MaterialTheme.typography.bodyMedium)
                     Spacer(Modifier.height(4.dp))
 
-                    Text("⭐ ${coffee.rating}", style = MaterialTheme.typography.bodySmall)
                 }
             }
 
-            // ⭐ Navigation same as PopularCoffee
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)

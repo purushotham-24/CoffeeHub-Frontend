@@ -4,7 +4,6 @@ package com.example.coffeehub.screens.auth
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -12,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -36,6 +36,13 @@ fun ResetPasswordOtp(
 
     val brown = Color(0xFF5C4033)
 
+    /* 🔐 STRONG PASSWORD (NO SPACES) */
+    fun isStrongPassword(pwd: String): Boolean {
+        val regex =
+            Regex("^(?=\\S+\$)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#\$%^&+=!]).{8,}\$")
+        return regex.matches(pwd)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -55,14 +62,10 @@ fun ResetPasswordOtp(
                 .padding(pad)
                 .padding(24.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            Text(
-                text = "OTP sent to $email",
-                fontSize = 13.sp,
-                color = Color.Gray
-            )
+            Text("OTP sent to $email", fontSize = 13.sp, color = Color.Gray)
 
             OutlinedTextField(
                 value = otp,
@@ -77,7 +80,14 @@ fun ResetPasswordOtp(
                 onValueChange = { password = it },
                 label = { Text("New Password") },
                 singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = "Password must be 8+ chars, include upper, lower, number, special & no spaces",
+                fontSize = 11.sp,
+                color = Color.Gray
             )
 
             if (errorMsg.isNotEmpty()) {
@@ -92,9 +102,17 @@ fun ResetPasswordOtp(
                 enabled = !isLoading,
                 onClick = {
 
-                    if (otp.isBlank() || password.isBlank()) {
-                        errorMsg = "All fields required"
-                        return@Button
+                    when {
+                        otp.isBlank() || password.isBlank() -> {
+                            errorMsg = "All fields are required"
+                            return@Button
+                        }
+
+                        !isStrongPassword(password) -> {
+                            errorMsg =
+                                "Password must be strong and should not contain spaces"
+                            return@Button
+                        }
                     }
 
                     isLoading = true
@@ -102,12 +120,11 @@ fun ResetPasswordOtp(
 
                     scope.launch(Dispatchers.IO) {
                         try {
-                            val res =
-                                AuthRepository().resetPassword(
-                                    email = email,
-                                    otp = otp,
-                                    password = password
-                                )
+                            val res = AuthRepository().resetPassword(
+                                email = email,
+                                otp = otp,
+                                password = password
+                            )
 
                             withContext(Dispatchers.Main) {
                                 if (res.status) {

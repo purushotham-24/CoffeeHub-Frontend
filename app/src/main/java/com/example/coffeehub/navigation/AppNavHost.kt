@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.coffeehub.screens.admin.AdminDashboard
 
 // ONBOARDING + AUTH
 import com.example.coffeehub.screens.onboarding.Onboarding1
@@ -152,6 +153,16 @@ fun AppNavHost() {
         composable("crowd_prediction") {
             CrowdPredictionScreen(nav)
         }
+
+
+        composable("admin_home") {
+            AdminDashboard()
+        }
+
+
+
+
+
 
     }
 }
