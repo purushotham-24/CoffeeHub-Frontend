@@ -1,34 +1,31 @@
 package com.example.coffeehub.navigation
-import com.example.coffeehub.screens.auth.ResetPasswordOtp
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.coffeehub.screens.admin.AdminDashboard
+import com.example.coffeehub.screens.admin.AdminManager
 
-// ONBOARDING + AUTH
+// AUTH
 import com.example.coffeehub.screens.onboarding.Onboarding1
 import com.example.coffeehub.screens.auth.Login
 import com.example.coffeehub.screens.auth.Register
 import com.example.coffeehub.screens.auth.ForgotPassword
-
+import com.example.coffeehub.screens.auth.ResetPasswordOtp
 
 // HOME
 import com.example.coffeehub.screens.home.HomeScreen
 import com.example.coffeehub.screens.home.NotificationSettings
 
 // SEARCH
-import com.example.coffeehub.screens.search.SearchScreen
-import com.example.coffeehub.screens.search.FilterScreen
-import com.example.coffeehub.screens.search.SearchResultsScreen
-import com.example.coffeehub.screens.search.SearchSuggestionsScreen
+import com.example.coffeehub.screens.search.*
 
 // PROFILE
-import com.example.coffeehub.screens.profile.ProfilePage
-import com.example.coffeehub.screens.profile.EditProfileScreen
+import com.example.coffeehub.screens.profile.*
 
-// SEAT BOOKING
+// BOOKING
 import com.example.coffeehub.screens.booking.*
 import com.example.coffeehub.screens.bookings.SeatBookingDetailsScreen
 
@@ -37,32 +34,19 @@ import com.example.coffeehub.screens.booking.WorkspaceOptions
 import com.example.coffeehub.screens.booking.WorkspaceDetails
 import com.example.coffeehub.screens.booking.WorkspaceHourlyPricing
 
+// PAYMENT
+import com.example.coffeehub.screens.payment.*
+
+// COFFEE
+import com.example.coffeehub.screens.coffee.*
+
 // OTHER
 import com.example.coffeehub.screens.orders.OrderHistoryScreen
 import com.example.coffeehub.screens.locations.NearbyLocationsScreen
 import com.example.coffeehub.screens.tracking.OrderTrackingScreen
-import com.example.coffeehub.screens.cart.CartScreen
-import com.example.coffeehub.screens.cart.Promo
+import com.example.coffeehub.screens.cart.*
 import com.example.coffeehub.screens.support.HelpSupportScreen
 import com.example.coffeehub.coffee.screens.favorites.SavedFavoritesScreen
-
-// PAYMENT
-import com.example.coffeehub.screens.payment.PaymentOptionsScreen
-import com.example.coffeehub.screens.payment.UPIPaymentScreen
-import com.example.coffeehub.screens.payment.CardPaymentScreen
-import com.example.coffeehub.screens.payment.PaymentSuccessScreen
-
-// COFFEE FLOW
-import com.example.coffeehub.screens.coffee.PopularCoffeeList
-import com.example.coffeehub.screens.coffee.CoffeeDetails
-import com.example.coffeehub.screens.coffee.CupSize
-import com.example.coffeehub.screens.coffee.AddToCart
-import com.example.coffeehub.screens.coffee.FilterCoffeeList
-import com.example.coffeehub.screens.coffee.CappuccinoList
-import com.example.coffeehub.screens.coffee.ColdCoffeeList
-import com.example.coffeehub.screens.coffee.LatteList
-
-// CROWD PREDICTION
 import com.example.coffeehub.screens.prediction.CrowdPredictionScreen
 
 @Composable
@@ -70,9 +54,13 @@ fun AppNavHost() {
 
     val nav = rememberNavController()
 
+    // 🔥 LOAD COFFEE DATA ON APP START (USER OR ADMIN)
+    LaunchedEffect(Unit) {
+        AdminManager.loadFromServer()
+    }
+
     NavHost(navController = nav, startDestination = "onboarding1") {
 
-        // ONBOARDING
         composable("onboarding1") { Onboarding1(nav) }
 
         // AUTH
@@ -90,23 +78,20 @@ fun AppNavHost() {
         composable("home") { HomeScreen(nav) }
         composable("notifications") { NotificationSettings { nav.popBackStack() } }
 
-        // POPULAR COFFEE
+        // COFFEE
         composable("popular_coffee") { PopularCoffeeList(nav) }
-
-        // COFFEE FLOW
-        composable("coffee_details/{id}") { entry ->
-            CoffeeDetails(nav, entry.arguments?.getString("id") ?: "1")
-        }
-        composable("cup_size/{id}") { entry ->
-            CupSize(nav, entry.arguments?.getString("id") ?: "1")
-        }
-        composable("add_to_cart") { AddToCart(nav) }
-
-        // CATEGORY LISTS
         composable("filter_coffee") { FilterCoffeeList(nav) }
         composable("cappuccino_list") { CappuccinoList(nav) }
         composable("cold_coffee_list") { ColdCoffeeList(nav) }
         composable("latte_list") { LatteList(nav) }
+
+        composable("coffee_details/{id}") { entry ->
+            CoffeeDetails(nav, entry.arguments?.getString("id") ?: "")
+        }
+        composable("cup_size/{id}") { entry ->
+            CupSize(nav, entry.arguments?.getString("id") ?: "")
+        }
+        composable("add_to_cart") { AddToCart(nav) }
 
         // SEARCH
         composable("search") { SearchScreen(nav) }
@@ -117,9 +102,9 @@ fun AppNavHost() {
         // PROFILE
         composable("profile") { ProfilePage(nav) }
         composable("edit-profile") { EditProfileScreen(nav) }
-        composable("booking-details") { SeatBookingDetailsScreen(nav) }
 
-        // BOOKING
+        // BOOKINGS
+        composable("booking-details") { SeatBookingDetailsScreen(nav) }
         composable("seat_map") { SeatLayoutMap(nav) }
         composable("datetime") { DateTimeSelection(nav) }
         composable("booking_confirmation") { BookingConfirmation(nav) }
@@ -128,10 +113,10 @@ fun AppNavHost() {
         // WORKSPACE
         composable("workspace_options") { WorkspaceOptions(nav) }
         composable("workspace_details/{id}") { entry ->
-            WorkspaceDetails(nav, entry.arguments?.getString("id") ?: "1")
+            WorkspaceDetails(nav, entry.arguments?.getString("id") ?: "")
         }
         composable("workspace_pricing/{id}") { entry ->
-            WorkspaceHourlyPricing(nav, entry.arguments?.getString("id") ?: "1")
+            WorkspaceHourlyPricing(nav, entry.arguments?.getString("id") ?: "")
         }
 
         // PAYMENT
@@ -149,16 +134,10 @@ fun AppNavHost() {
         composable("favorites") { SavedFavoritesScreen(nav) }
         composable("support") { HelpSupportScreen(nav) }
 
-        // CROWD PREDICTION (FIXED)
-        composable("crowd_prediction") {
-            CrowdPredictionScreen(nav)
-        }
+        // CROWD
+        composable("crowd_prediction") { CrowdPredictionScreen(nav) }
 
-
-        composable("admin_home") {
-            AdminDashboard(nav)
-        }
-
-
+        // ADMIN
+        composable("admin_home") { AdminDashboard(nav) }
     }
 }

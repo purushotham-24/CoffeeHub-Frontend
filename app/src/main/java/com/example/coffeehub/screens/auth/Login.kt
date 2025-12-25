@@ -64,7 +64,7 @@ fun Login(nav: NavController) {
         }
 
         /* ================= ADMIN LOGIN (FIXED) ================= */
-        if (cleanEmail == "coffeehub376@gmail.com" && password == "Coffeehub@24") {
+        if (cleanEmail == "coffeehub376@gmail.com" && password == "Welcome@24") {
 
             // Save admin session
             SessionManager.userId = 0

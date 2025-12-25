@@ -8,12 +8,17 @@ object AdminManager {
 
     val coffees = mutableStateListOf<Coffee>()
 
-    // 🔥 LOAD FROM MYSQL (PHP)
+    // 🔥 LOAD COFFEES FROM BACKEND (SAFE)
     suspend fun loadFromServer() {
-        coffees.clear()
-        coffees.addAll(
-            RetrofitClient.api.getAllCoffees()
-        )
+        try {
+            coffees.clear()
+            coffees.addAll(
+                RetrofitClient.api.getAllCoffees()
+            )
+        } catch (e: Exception) {
+            // Backend down / no internet
+            coffees.clear()
+        }
     }
 
     // 🔥 ADD COFFEE (DB + UI)
