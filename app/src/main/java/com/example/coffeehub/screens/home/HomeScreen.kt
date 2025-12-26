@@ -1,4 +1,8 @@
 package com.example.coffeehub.screens.home
+import java.util.Calendar
+import java.util.TimeZone
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -206,23 +210,53 @@ data class CrowdData(val level: Int, val label: String, val color: Color)
 @Composable
 fun CrowdPredictionCard(nav: NavController) {
 
-    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    val brown = Color(0xFF5C4033)
+    val cream = Color(0xFFF5E6CF)
 
-    val current = when {
-        hour in 12..13 -> CrowdData(92, "Peak", Color(0xFFE53935))
-        hour in 9..10 -> CrowdData(78, "High", Color(0xFFFF9800))
-        hour in 17..18 -> CrowdData(82, "High", Color(0xFFFF9800))
-        hour in 8..16 -> CrowdData(55, "Medium", Color(0xFFFFD700))
-        else -> CrowdData(28, "Low", Color(0xFF4CAF50))
+    // IST time
+    val ist = TimeZone.getTimeZone("Asia/Kolkata")
+    val calendar = Calendar.getInstance(ist)
+    val hour = calendar.get(Calendar.HOUR_OF_DAY)
+
+    val todayData: List<Int> = listOf(
+        59, 59, 61, 53, 54, 58, 53, 49,
+        50, 46, 46, 43, 44, 40, 41, 36
+    )
+
+    val index: Int =
+        if (hour < 7) 0
+        else if (hour > 22) todayData.size - 1
+        else hour - 7
+
+    val crowdLevel: Int = todayData[index]
+
+    var labelText = "Low"
+    var circleColor = Color(0xFF4CAF50)
+
+    if (crowdLevel >= 70) {
+        labelText = "Peak"
+        circleColor = Color(0xFFE53935)
+    } else if (crowdLevel >= 45) {
+        labelText = "Moderate"
+        circleColor = Color(0xFFFF9800)
     }
 
-    val brown = Color(0xFF5C4033)
+    val timeFormatter =
+        SimpleDateFormat("hh:mm a", Locale.getDefault())
+    val timeText = timeFormatter.format(calendar.time)
 
     Box(
-        Modifier
+        modifier = Modifier
             .padding(horizontal = 18.dp, vertical = 14.dp)
             .clip(RoundedCornerShape(22.dp))
-            .background(Brush.linearGradient(listOf(brown, brown.copy(.85f))))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        brown,
+                        brown.copy(alpha = 0.85f)
+                    )
+                )
+            )
             .clickable { nav.navigate("crowd_prediction") }
             .padding(18.dp)
     ) {
@@ -230,64 +264,72 @@ fun CrowdPredictionCard(nav: NavController) {
         Column {
 
             Row(
-                Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Groups, null, tint = Color.White)
+                    Spacer(Modifier.width(8.dp))
+                    Text("AI Crowd Status", color = Color.White)
+                }
+
+                Text(
+                    timeText,
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 12.sp
+                )
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Groups, "", tint = Color.White)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Crowd Status", color = Color.White)
-                }
-
-                Row(
-                    Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color.White.copy(0.2f))
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(Color.Green)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text("view", color = Color.White, fontSize = 12.sp)
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-
                 Column {
-                    Text("${current.level}%", color = Color.White, fontSize = 28.sp)
-                    Text("${current.label} crowd level", color = Color(0xFFF5E6CF))
+                    Text(
+                        text = "$crowdLevel%",
+                        color = Color.White,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "$labelText crowd expected",
+                        color = cream,
+                        fontSize = 13.sp
+                    )
                 }
 
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        Modifier
-                            .size(60.dp)
-                            .clip(CircleShape)
-                            .background(current.color),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Groups, "", tint = Color.White)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text("View forecast →", color = Color(0xFFF5E6CF), fontSize = 12.sp)
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .background(circleColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Groups,
+                        null,
+                        tint = Color.White
+                    )
                 }
             }
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                "Powered by AI crowd prediction",
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 11.sp
+            )
         }
     }
 }
+
+
 
 // ---------------------------------------------------------------------------
 // CATEGORY CARD
