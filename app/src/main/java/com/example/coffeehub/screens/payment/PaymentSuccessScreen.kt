@@ -21,7 +21,6 @@ import com.example.coffeehub.data.network.RetrofitClient
 import com.example.coffeehub.screens.orders.OrderHistoryManager
 import com.example.coffeehub.screens.tracking.OrderTrackingManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -35,42 +34,46 @@ fun PaymentSuccessScreen(nav: NavController) {
     val totalAmount = CartManager.totalAmount
     val orderId = remember { "#ORD${System.currentTimeMillis()}" }
 
-    // 🔄 3 SECOND BUFFER STATE
     var showSuccess by remember { mutableStateOf(false) }
+    var orderSaved by remember { mutableStateOf(false) }
 
-    // ⏳ Delay before showing success UI
+    val scope = rememberCoroutineScope()
+
+    // ✅ AUTO SAVE ORDER AFTER 3 SECONDS
     LaunchedEffect(Unit) {
         delay(3000)
         showSuccess = true
-    }
 
-    fun saveOrder() {
-        if (totalAmount <= 0) return
+        if (!orderSaved && totalAmount > 0) {
+            orderSaved = true
 
-        OrderHistoryManager.addOrder(
-            id = orderId,
-            items = 1,
-            total = totalAmount
-        )
+            // local history
+            OrderHistoryManager.addOrder(
+                id = orderId,
+                items = 1,
+                total = totalAmount
+            )
 
-        GlobalScope.launch(Dispatchers.IO) {
-            try {
-                RetrofitClient.api.placeOrder(
-                    PlaceOrderRequest(
-                        user_id = 1,
-                        order_id = orderId,
-                        items = 1,
-                        total = totalAmount,
-                        status = "Completed"
+            // backend save
+            scope.launch(Dispatchers.IO) {
+                try {
+                    RetrofitClient.api.saveOrder(
+                        PlaceOrderRequest(
+                            user_id = 1,
+                            order_id = orderId,
+                            items = 1,
+                            total = totalAmount,
+                            status = "Completed"
+                        )
                     )
-                )
-            } catch (e: Exception) {
-                e.printStackTrace()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
     }
 
-    // 🔄 LOADING SCREEN (3 SECONDS)
+    // 🔄 LOADING SCREEN
     if (!showSuccess) {
         Box(
             modifier = Modifier
@@ -81,17 +84,13 @@ fun PaymentSuccessScreen(nav: NavController) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CircularProgressIndicator(color = brown)
                 Spacer(Modifier.height(14.dp))
-                Text(
-                    text = "Processing Payment...",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
+                Text("Processing Payment...", color = Color.Gray)
             }
         }
         return
     }
 
-    // ✅ SUCCESS UI (UNCHANGED)
+    // ✅ SUCCESS UI
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -169,7 +168,6 @@ fun PaymentSuccessScreen(nav: NavController) {
             OutlinedButton(
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    saveOrder()
                     CartManager.clear()
                     nav.navigate("home") {
                         popUpTo("payment") { inclusive = true }
@@ -183,8 +181,6 @@ fun PaymentSuccessScreen(nav: NavController) {
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(containerColor = brown),
                 onClick = {
-                    saveOrder()
-                    CartManager.clear()
                     OrderTrackingManager.reset()
                     OrderTrackingManager.startTracking()
                     nav.navigate("tracking") {
@@ -209,11 +205,6 @@ fun PaymentInfoRow(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(label, color = Color.Gray, fontSize = 12.sp)
-        Text(
-            value,
-            color = color,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold
-        )
+        Text(value, color = color, fontWeight = FontWeight.SemiBold)
     }
 }

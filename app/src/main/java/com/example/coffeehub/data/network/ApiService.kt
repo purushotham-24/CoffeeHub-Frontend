@@ -123,6 +123,12 @@ interface ApiService {
         @Query("id") id: String
     ): ApiResponse<Unit>
 
+    @POST("payments/save_order.php")
+    suspend fun saveOrder(
+        @Body request: PlaceOrderRequest
+    ): ApiResponse<Any>
+
+
 
 
 
