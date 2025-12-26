@@ -3,9 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+
+
 dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
-
     // Google Maps
     implementation("com.google.android.gms:play-services-maps:18.2.0")
 

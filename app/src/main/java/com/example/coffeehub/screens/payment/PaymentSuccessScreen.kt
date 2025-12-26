@@ -16,12 +16,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.coffeehub.cart.CartManager
-import com.example.coffeehub.data.model.PlaceOrderRequest   // ✅ ADD THIS
+import com.example.coffeehub.data.model.PlaceOrderRequest
 import com.example.coffeehub.data.network.RetrofitClient
 import com.example.coffeehub.screens.orders.OrderHistoryManager
 import com.example.coffeehub.screens.tracking.OrderTrackingManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -34,17 +35,24 @@ fun PaymentSuccessScreen(nav: NavController) {
     val totalAmount = CartManager.totalAmount
     val orderId = remember { "#ORD${System.currentTimeMillis()}" }
 
+    // 🔄 3 SECOND BUFFER STATE
+    var showSuccess by remember { mutableStateOf(false) }
+
+    // ⏳ Delay before showing success UI
+    LaunchedEffect(Unit) {
+        delay(3000)
+        showSuccess = true
+    }
+
     fun saveOrder() {
         if (totalAmount <= 0) return
 
-        // Local UI history (memory) — unchanged
         OrderHistoryManager.addOrder(
             id = orderId,
             items = 1,
             total = totalAmount
         )
 
-        // ✅ ONLY FIX: send PlaceOrderRequest instead of map
         GlobalScope.launch(Dispatchers.IO) {
             try {
                 RetrofitClient.api.placeOrder(
@@ -62,6 +70,28 @@ fun PaymentSuccessScreen(nav: NavController) {
         }
     }
 
+    // 🔄 LOADING SCREEN (3 SECONDS)
+    if (!showSuccess) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = brown)
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    text = "Processing Payment...",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+        }
+        return
+    }
+
+    // ✅ SUCCESS UI (UNCHANGED)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -175,10 +205,15 @@ fun PaymentInfoRow(
     color: Color = Color(0xFF5C4033)
 ) {
     Row(
-        Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(label, color = Color.Gray, fontSize = 12.sp)
-        Text(value, color = color, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Text(
+            value,
+            color = color,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
