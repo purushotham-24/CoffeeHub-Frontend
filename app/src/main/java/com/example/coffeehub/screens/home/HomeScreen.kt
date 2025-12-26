@@ -173,9 +173,7 @@ fun HeaderSection(nav: NavController, brown: Color, cream: Color) {
                 }
 
                 Row {
-                    IconButton({ nav.navigate("notifications") }) {
-                        Icon(Icons.Default.Notifications, "", tint = Color.White)
-                    }
+
                     IconButton({ nav.navigate("cart") }) {
                         Icon(Icons.Default.ShoppingCart, "", tint = Color.White)
                     }

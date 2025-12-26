@@ -17,17 +17,44 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.coffeehub.screens.home.components.HeaderBar
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateTimeSelection(nav: NavController) {
 
-    var selectedDate by remember { mutableStateOf("2024-11-20") }
+    val today = LocalDate.now()
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    var selectedDate by remember {
+        mutableStateOf(today.format(formatter))
+    }
     var selectedTime by remember { mutableStateOf("") }
+    var showCalendar by remember { mutableStateOf(false) }
 
     val timeSlots = listOf(
         "09:00 AM","10:00 AM","11:00 AM","12:00 PM",
         "01:00 PM","02:00 PM","03:00 PM","04:00 PM","05:00 PM","06:00 PM"
+    )
+
+    // ✅ Correct DatePicker state
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = today
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli(),
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                val pickedDate = Instant
+                    .ofEpochMilli(utcTimeMillis)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate()
+                return !pickedDate.isBefore(today) // 🚫 block past dates
+            }
+        }
     )
 
     Column(
@@ -44,7 +71,7 @@ fun DateTimeSelection(nav: NavController) {
 
         Column(Modifier.padding(20.dp)) {
 
-            // DATE
+            // 📅 DATE
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.CalendarToday, null, tint = Color(0xFF5C4033))
                 Spacer(Modifier.width(8.dp))
@@ -55,14 +82,20 @@ fun DateTimeSelection(nav: NavController) {
 
             OutlinedTextField(
                 value = selectedDate,
-                onValueChange = { selectedDate = it },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp)
+                onValueChange = {},
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showCalendar = true },
+                enabled = false,
+                shape = RoundedCornerShape(18.dp),
+                trailingIcon = {
+                    Icon(Icons.Default.CalendarToday, null, tint = Color(0xFF5C4033))
+                }
             )
 
             Spacer(Modifier.height(24.dp))
 
-            // TIME
+            // ⏰ TIME
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Schedule, null, tint = Color(0xFF5C4033))
                 Spacer(Modifier.width(8.dp))
@@ -109,15 +142,11 @@ fun DateTimeSelection(nav: NavController) {
 
         Spacer(Modifier.weight(1f))
 
-        // CONTINUE BUTTON
         Button(
             onClick = {
-
-                // SAVE DATE & TIME
                 BookingManager.selectedDate.value = selectedDate
                 BookingManager.selectedTime.value = selectedTime
 
-                // 🔥 IMPORTANT FIX FOR WORKSPACE FLOW
                 if (BookingManager.bookingType.value.isBlank()) {
                     BookingManager.bookingType.value = "workspace"
                 }
@@ -137,6 +166,32 @@ fun DateTimeSelection(nav: NavController) {
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+
+    // 📅 DATE PICKER DIALOG (CORRECT API)
+    if (showCalendar) {
+        DatePickerDialog(
+            onDismissRequest = { showCalendar = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val pickedDate = Instant
+                            .ofEpochMilli(millis)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        selectedDate = pickedDate.format(formatter)
+                    }
+                    showCalendar = false
+                }) {
+                    Text("OK")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                showModeToggle = false
             )
         }
     }
