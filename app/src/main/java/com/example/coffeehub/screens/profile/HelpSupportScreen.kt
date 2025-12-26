@@ -34,14 +34,46 @@ fun HelpSupportScreen(nav: NavController) {
     )
 
     val faqs = listOf(
-        FAQData("How do I place an order?", "Browse menu → Add item → Checkout → Pay via UPI/Card/Wallet"),
-        FAQData("Can I cancel my order?", "Orders can be cancelled within 2 minutes after placing."),
-        FAQData("How to book workspace?", "Select → Choose Date & Time → Pay → Confirmation."),
-        FAQData("Refund policy?", "Refund takes 5–7 business days to process."),
-        FAQData("How to track order?", "Check Order Tracking from bottom navigation.")
+        FAQData("How do I place an order?", "Browse → Add → Checkout → Pay"),
+        FAQData("Can I cancel my order?", "Cancellation allowed within 2 minutes."),
+        FAQData("How to book workspace?", "Select → Date & Time → Pay"),
+        FAQData("Refund policy?", "Refund takes 5–7 business days."),
+        FAQData("How to track order?", "Use Order Tracking screen.")
     )
 
-    var expandedIndex by remember { mutableStateOf(-1) }
+    val quickLinks = listOf(
+        FAQData(
+            "Terms & Conditions",
+            """
+• Orders cannot be modified once placed
+• Cancellation allowed within 2 minutes
+• Payments are securely processed
+• Misuse may lead to suspension
+            """.trimIndent()
+        ),
+        FAQData(
+            "Privacy Policy",
+            """
+• We do not share user data
+• Payments are secure
+• Data stored safely
+• Location used only for service
+            """.trimIndent()
+        ),
+        FAQData(
+            "About CoffeeHub",
+            """
+CoffeeHub is a smart café app that enables:
+• Coffee ordering
+• Seat & workspace booking
+• Payments & tracking
+• AI-based crowd prediction
+            """.trimIndent()
+        )
+    )
+
+    var expandedFaq by remember { mutableStateOf(-1) }
+    var expandedQuick by remember { mutableStateOf(-1) }
 
     Scaffold(
         topBar = {
@@ -58,63 +90,86 @@ fun HelpSupportScreen(nav: NavController) {
     ) { pad ->
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(pad).background(Color.White)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(pad)
+                .background(Color.White)
         ) {
 
             item { Spacer(Modifier.height(14.dp)) }
 
-            // CONTACT SECTION
+            // CONTACT US
             item {
-                Text("Contact Us", modifier = Modifier.padding(16.dp), fontSize = 18.sp, color = brown)
+                Text("Contact Us", Modifier.padding(16.dp), fontSize = 18.sp, color = brown)
                 contacts.forEach {
                     ContactCard(it)
                     Spacer(Modifier.height(10.dp))
                 }
             }
 
-            item { Spacer(Modifier.height(20.dp)) }
-
-            // FAQ SECTION
+            // FAQ
             item {
-                Row(
-                    Modifier.padding(horizontal=16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Help, "", tint = brown)
-                    Spacer(Modifier.width(6.dp))
-                    Text("FAQs", fontSize = 18.sp, color = brown)
-                }
+                Spacer(Modifier.height(20.dp))
+                SectionTitle("FAQs", brown)
             }
 
             items(faqs) { faq ->
-                FAQCard(
-                    faq = faq,
-                    expanded = faqs.indexOf(faq) == expandedIndex,
-                    toggle = {
-                        expandedIndex = if (expandedIndex == faqs.indexOf(faq)) -1
-                        else faqs.indexOf(faq)
+                ExpandableCard(
+                    data = faq,
+                    expanded = expandedFaq == faqs.indexOf(faq),
+                    onClick = {
+                        expandedFaq =
+                            if (expandedFaq == faqs.indexOf(faq)) -1
+                            else faqs.indexOf(faq)
                     }
                 )
-                Spacer(Modifier.height(10.dp))
             }
 
+            // QUICK LINKS
             item {
                 Spacer(Modifier.height(20.dp))
-                Text("Quick Links", modifier = Modifier.padding(16.dp), fontSize = 18.sp, color = brown)
-                QuickLink("Terms & Conditions")
-                QuickLink("Privacy Policy")
-                QuickLink("About Us")
-                Spacer(Modifier.height(20.dp))
+                SectionTitle("Quick Links", brown)
             }
+
+            items(quickLinks) { link ->
+                ExpandableCard(
+                    data = link,
+                    expanded = expandedQuick == quickLinks.indexOf(link),
+                    onClick = {
+                        expandedQuick =
+                            if (expandedQuick == quickLinks.indexOf(link)) -1
+                            else quickLinks.indexOf(link)
+                    }
+                )
+            }
+
+            item { Spacer(Modifier.height(20.dp)) }
         }
+    }
+}
+
+/* ---------- COMPONENTS ---------- */
+
+@Composable
+fun SectionTitle(text: String, color: Color) {
+    Row(
+        Modifier.padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Default.Help, "", tint = color)
+        Spacer(Modifier.width(6.dp))
+        Text(text, fontSize = 18.sp, color = color)
     }
 }
 
 @Composable
 fun ContactCard(contact: ContactOption) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(14.dp)).background(Color.White)
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -134,40 +189,34 @@ fun ContactCard(contact: ContactOption) {
 }
 
 @Composable
-fun FAQCard(faq: FAQData, expanded:Boolean, toggle:()->Unit) {
-
-    val rotate by animateFloatAsState(if(expanded) 90f else 0f)
+fun ExpandableCard(
+    data: FAQData,
+    expanded: Boolean,
+    onClick: () -> Unit
+) {
+    val rotate by animateFloatAsState(if (expanded) 90f else 0f)
 
     Column(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(Color.White)
-            .clickable { toggle() }
+            .clickable { onClick() }
             .padding(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(faq.question, color = Color(0xFF5C4033), fontSize = 15.sp, modifier = Modifier.weight(1f))
+            Text(data.question, color = Color(0xFF5C4033), fontSize = 15.sp, modifier = Modifier.weight(1f))
             Icon(Icons.Default.ChevronRight, "", tint = Color.Gray, modifier = Modifier.rotate(rotate))
         }
-        if(expanded) {
+        if (expanded) {
             Spacer(Modifier.height(6.dp))
-            Text(faq.answer, fontSize = 13.sp, color = Color.DarkGray)
+            Text(data.answer, fontSize = 13.sp, color = Color.DarkGray)
         }
     }
 }
 
-@Composable fun QuickLink(text:String) =
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color.White)
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text, color = Color(0xFF5C4033))
-        Icon(Icons.Default.ChevronRight, "", tint = Color.Gray)
-    }
+/* ---------- DATA ---------- */
 
-/* ==== DATA ==== */
-data class ContactOption(val icon: ImageVector, val label:String, val value:String)
-data class FAQData(val question:String, val answer:String)
+data class ContactOption(val icon: ImageVector, val label: String, val value: String)
+data class FAQData(val question: String, val answer: String)
