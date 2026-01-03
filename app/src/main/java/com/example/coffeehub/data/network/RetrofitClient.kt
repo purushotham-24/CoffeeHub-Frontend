@@ -7,17 +7,21 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    // ✅ CORRECT for your folder structure
-    private const val BASE_URL = "http://10.208.2.9/COFFEEHUB/"
-
-
+    private const val BASE_URL =
+        "https://pseudoministerial-apnoeal-clementine.ngrok-free.dev/coffeehub/"
 
     private val logger = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
     private val client = OkHttpClient.Builder()
-        .addInterceptor(logger)
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .addHeader("ngrok-skip-browser-warning", "true")
+                .build()
+            chain.proceed(request)
+        }
+        .addInterceptor(logger) // keep logger LAST
         .build()
 
     val api: ApiService by lazy {

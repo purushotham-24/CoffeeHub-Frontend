@@ -52,10 +52,11 @@ fun EditProfileScreen(nav: NavController) {
             try {
                 val res = repo.getProfile(userId)
                 if (res.status && res.data != null) {
-                    name = res.data.name
-                    email = res.data.email
-                    phone = res.data.phone
-                    dob = res.data.dob
+                    name = res.data.name ?: ""
+                    email = res.data.email ?: ""
+                    phone = res.data.phone ?: ""
+                    dob = res.data.dob ?: ""
+
                 }
             } catch (e: Exception) {
                 Toast.makeText(context, "Failed to load profile", Toast.LENGTH_SHORT).show()
