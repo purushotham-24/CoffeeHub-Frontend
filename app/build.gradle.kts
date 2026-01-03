@@ -2,17 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-}
-
-
-
-dependencies {
-    implementation("com.google.android.gms:play-services-location:21.0.1")
-    // Google Maps
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
-
-    // Maps Compose
-    implementation("com.google.maps.android:maps-compose:4.3.0")
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -58,43 +48,52 @@ android {
 
 dependencies {
 
-    // Android core
+    // 🔹 Google Maps
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.maps.android:maps-compose:4.3.0")
+
+    // 🔹 Android Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
-    // Compose
+    // 🔹 Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
-    // Navigation
+    // 🔹 Navigation
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
-    // Coil - image loader
+    // 🔹 Coil
     implementation("io.coil-kt:coil-compose:2.6.0")
 
-    // Material Icons
+    // 🔹 Material Icons
     implementation("androidx.compose.material:material-icons-extended:1.6.1")
 
-    // --- Retrofit / OkHttp / Gson / Coroutines (added) ---
+    // 🔹 Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
+    // 🔹 Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
 
-    // Lifecycle / ViewModel (recommended)
+    // 🔹 Lifecycle
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-    // -------------------------------------------------------
 
-    // Tests
+    // 🔹 Google Sign-In + Firebase
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+
+    // 🔹 Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -103,7 +102,4 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-
-
-
 }

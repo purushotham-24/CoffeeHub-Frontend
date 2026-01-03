@@ -1,3 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">CoffeeHub</string>
+
+    <string name="default_web_client_id">
+        177762452722-onnfac2516vvnkeajtguo1vr4b2otijl.apps.googleusercontent.com
+    </string>
+
 </resources>

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "177762452722",
+    "project_id": "coffeehub-7b863",
+    "storage_bucket": "coffeehub-7b863.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:177762452722:android:5f355572a25016edb6fc6b",
+        "android_client_info": {
+          "package_name": "com.example.coffeehub"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "177762452722-fbjumj9cde1h7tsp97i94nub79r08enq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.coffeehub",
+            "certificate_hash": "a56f98f599d24750299b5bd0ac75d366144b570d"
+          }
+        },
+        {
+          "client_id": "177762452722-onnfac2516vvnkeajtguo1vr4b2otijl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOogPzkUHhYC0bl1aXHz4NiQRUCDp2WKc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "177762452722-onnfac2516vvnkeajtguo1vr4b2otijl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

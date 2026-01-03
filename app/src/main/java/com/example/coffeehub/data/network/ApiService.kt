@@ -128,7 +128,10 @@ interface ApiService {
         @Body request: PlaceOrderRequest
     ): ApiResponse<Any>
 
-
+    @POST("auth/google_login.php")
+    suspend fun googleLogin(
+        @Body body: Map<String, String>
+    ): Map<String, Any>
 
 
 
