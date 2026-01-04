@@ -41,7 +41,15 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { nav.popBackStack() }) {
+                    // ✅ UPDATED BACK BUTTON (ALWAYS GO HOME)
+                    IconButton(
+                        onClick = {
+                            nav.navigate("home") {
+                                popUpTo("home") { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    ) {
                         Icon(Icons.Default.ArrowBack, null, tint = Color.White)
                     }
                 },
@@ -61,7 +69,6 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                 Text("No bookings yet", fontSize = 18.sp, color = Color.Gray)
             }
         } else {
-
             LazyColumn(
                 modifier = Modifier
                     .padding(padding)
@@ -69,7 +76,6 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                     .background(Color.White),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-
                 items(
                     items = BookingHistoryManager.bookings,
                     key = { it.id }
@@ -82,7 +88,6 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(Color(0xFFF5E6CF))
                     ) {
-
                         Column(
                             modifier = Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -127,7 +132,9 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(50),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color.Red
+                                )
                             ) {
                                 Icon(Icons.Default.Cancel, null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
@@ -140,7 +147,7 @@ fun SeatBookingDetailsScreen(nav: NavController) {
         }
     }
 
-    /* ---------- CANCEL CONFIRMATION ---------- */
+    // ---------- CANCEL CONFIRMATION ----------
     if (showCancelDialog && selectedBooking != null) {
         AlertDialog(
             onDismissRequest = { showCancelDialog = false },
@@ -154,8 +161,6 @@ fun SeatBookingDetailsScreen(nav: NavController) {
             confirmButton = {
                 TextButton(
                     onClick = {
-
-                        // ✅ FREE SEATS IF SEAT BOOKING
                         if (selectedBooking!!.type == "seat") {
                             val seatIds = selectedBooking!!.title
                                 .replace("Seats:", "")
@@ -165,7 +170,6 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                             SeatManager.freeSeats(seatIds)
                         }
 
-                        // ✅ REMOVE BOOKING
                         BookingHistoryManager.bookings.remove(selectedBooking)
 
                         selectedBooking = null

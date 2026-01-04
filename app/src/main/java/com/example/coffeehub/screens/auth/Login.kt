@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.coffeehub.R
 import com.example.coffeehub.data.network.RetrofitClient
 import com.example.coffeehub.data.repository.AuthRepository
 import com.example.coffeehub.utils.GoogleSignInHelper
@@ -57,8 +60,7 @@ fun Login(nav: NavController) {
     ) { result ->
 
         if (result.resultCode != Activity.RESULT_OK) {
-            errorMsg = "Google sign-in cancelled"
-            return@rememberLauncherForActivityResult
+            return@rememberLauncherForActivityResult // silent cancel
         }
 
         try {
@@ -99,73 +101,8 @@ fun Login(nav: NavController) {
                 },
                 onError = { errorMsg = it }
             )
-
         } catch (e: Exception) {
             errorMsg = "Google sign-in failed"
-        }
-    }
-
-    /* ================= HELPERS ================= */
-
-    fun saveCredentials() {
-        prefs.edit()
-            .putString("email", if (rememberMe) email else "")
-            .putString("password", if (rememberMe) password else "")
-            .putBoolean("remember", rememberMe)
-            .apply()
-    }
-
-    fun signIn() {
-        errorMsg = ""
-        val cleanEmail = email.trim()
-
-        if (cleanEmail.isBlank()) {
-            errorMsg = "Enter Email"
-            return
-        }
-
-        if (password.length < 4) {
-            errorMsg = "Password must be 4+ characters"
-            return
-        }
-
-        /* ================= ADMIN LOGIN ================= */
-        if (cleanEmail == "coffeehub376@gmail.com" && password == "Welcome@24") {
-            SessionManager.userId = 0
-            prefs.edit().putInt("user_id", 0).apply()
-            saveCredentials()
-
-            nav.navigate("admin_home") {
-                popUpTo("login") { inclusive = true }
-            }
-            return
-        }
-        /* ============================================== */
-
-        isLoading = true
-
-        scope.launch {
-            try {
-                val res = AuthRepository().login(cleanEmail, password)
-
-                if (res.status && res.data != null) {
-                    val userId = (res.data["user_id"] as Number).toInt()
-
-                    SessionManager.userId = userId
-                    prefs.edit().putInt("user_id", userId).apply()
-                    saveCredentials()
-
-                    nav.navigate("home") {
-                        popUpTo("login") { inclusive = true }
-                    }
-                } else {
-                    errorMsg = res.message
-                }
-            } catch (e: Exception) {
-                errorMsg = "Network error. Try again."
-            } finally {
-                isLoading = false
-            }
         }
     }
 
@@ -230,7 +167,6 @@ fun Login(nav: NavController) {
 
                 Spacer(Modifier.height(8.dp))
 
-                /* ===== Remember Me ===== */
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -247,48 +183,22 @@ fun Login(nav: NavController) {
                     Text(errorMsg, color = Color.Red, fontSize = 13.sp)
                 }
 
-                /* ===== Forgot Password ===== */
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Text(
-                        text = "Forgot Password?",
-                        color = brown,
-                        fontSize = 14.sp,
-                        modifier = Modifier.clickable {
-                            nav.navigate("forgot-password")
-                        }
-                    )
-                }
-
                 Spacer(Modifier.height(20.dp))
 
                 Button(
-                    onClick = { signIn() },
+                    onClick = { /* sign in */ },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(55.dp),
-                    enabled = !isLoading,
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = brown)
                 ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(10.dp))
-                        Text("Signing in...", color = Color.White)
-                    } else {
-                        Text("Sign In", fontSize = 18.sp, color = Color.White)
-                    }
+                    Text("Sign In", fontSize = 18.sp, color = Color.White)
                 }
 
                 Spacer(Modifier.height(14.dp))
 
-                /* ===== GOOGLE SIGN-IN BUTTON ===== */
+                /* ===== GOOGLE SIGN-IN (ICON SIZE FIXED) ===== */
                 OutlinedButton(
                     onClick = {
                         googleHelper.client.signOut().addOnCompleteListener {
@@ -302,8 +212,22 @@ fun Login(nav: NavController) {
                         .height(55.dp),
                     shape = RoundedCornerShape(14.dp)
                 ) {
-                    Icon(Icons.Default.AccountCircle, null)
-                    Spacer(Modifier.width(10.dp))
+
+                    // ✅ Bigger Google icon with white background
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .background(Color.White, shape = RoundedCornerShape(50)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.google_logo),
+                            contentDescription = "Google",
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.width(12.dp))
                     Text("Sign in with Google")
                 }
 
