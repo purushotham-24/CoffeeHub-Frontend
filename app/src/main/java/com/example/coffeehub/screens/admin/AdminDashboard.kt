@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.coffeehub.model.Coffee
+import com.example.coffeehub.utils.SessionManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,11 +30,10 @@ fun AdminDashboard(nav: NavController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    /* ---------- THEME COLORS ---------- */
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
 
-    /* ---------- LOAD COFFEES FROM SERVER ---------- */
+    /* ---------- LOAD COFFEES ---------- */
     LaunchedEffect(Unit) {
         scope.launch {
             AdminManager.loadFromServer()
@@ -58,12 +58,30 @@ fun AdminDashboard(nav: NavController) {
                 actions = {
                     IconButton(
                         onClick = {
-                            // ✅ CLEAR SESSION & LOGOUT
+
                             val prefs = context.getSharedPreferences(
                                 "coffeehub_prefs",
                                 Context.MODE_PRIVATE
                             )
+
+                            // ✅ Preserve Remember Me
+                            val remember = prefs.getBoolean("remember", false)
+                            val savedEmail = prefs.getString("email", "")
+                            val savedPassword = prefs.getString("password", "")
+
+                            // Clear all
                             prefs.edit().clear().apply()
+
+                            // Restore remember-me if enabled
+                            if (remember) {
+                                prefs.edit()
+                                    .putBoolean("remember", true)
+                                    .putString("email", savedEmail)
+                                    .putString("password", savedPassword)
+                                    .apply()
+                            }
+
+                            SessionManager.userId = -1
 
                             nav.navigate("login") {
                                 popUpTo(0) { inclusive = true }
@@ -159,9 +177,7 @@ fun AdminDashboard(nav: NavController) {
     }
 }
 
-/* ================================================= */
-/* ================= COFFEE CARD =================== */
-/* ================================================= */
+/* ================= COFFEE CARD ================= */
 
 @Composable
 fun CoffeeAdminCard(
@@ -180,15 +196,8 @@ fun CoffeeAdminCard(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
 
-            Text(
-                text = coffee.name,
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Text(
-                text = coffee.description,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Text(text = coffee.name, style = MaterialTheme.typography.titleMedium)
+            Text(text = coffee.description, style = MaterialTheme.typography.bodyMedium)
 
             Spacer(modifier = Modifier.height(6.dp))
 
@@ -205,18 +214,10 @@ fun CoffeeAdminCard(
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(onClick = onEdit) {
-                    Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = "Edit",
-                        tint = brown
-                    )
+                    Icon(Icons.Filled.Edit, contentDescription = "Edit", tint = brown)
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "Delete",
-                        tint = Color.Red
-                    )
+                    Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = Color.Red)
                 }
             }
         }

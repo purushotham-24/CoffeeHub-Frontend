@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.coffeehub.data.repository.ProfileRepository
+import com.example.coffeehub.utils.SessionManager
 import kotlinx.coroutines.launch
 
 @Composable
@@ -39,7 +40,7 @@ fun ProfilePage(nav: NavController) {
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
 
-    /* -------- LOAD PROFILE FROM DB -------- */
+    /* ---------- LOAD PROFILE FROM DB ---------- */
     LaunchedEffect(userId) {
         if (userId != 0) {
             try {
@@ -49,6 +50,7 @@ fun ProfilePage(nav: NavController) {
                     email = res.data.email ?: ""
                     phone = res.data.phone ?: ""
 
+                    // cache locally (optional)
                     prefs.edit()
                         .putString("profile_name", name)
                         .putString("profile_email", email)
@@ -140,12 +142,38 @@ fun ProfilePage(nav: NavController) {
 
             Spacer(Modifier.height(20.dp))
 
+            /* ---------- LOGOUT (REMEMBER ME SAFE) ---------- */
             MenuItemRed("Logout", Icons.Default.Logout) {
+
+                val remember = prefs.getBoolean("remember", false)
+                val savedEmail = prefs.getString("email", "")
+                val savedPassword = prefs.getString("password", "")
+
                 prefs.edit().clear().apply()
+
+                if (remember) {
+                    prefs.edit()
+                        .putBoolean("remember", true)
+                        .putString("email", savedEmail)
+                        .putString("password", savedPassword)
+                        .apply()
+                }
+
+                SessionManager.userId = -1
+
                 nav.navigate("login") {
                     popUpTo(0) { inclusive = true }
                 }
             }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(
+                text = "CoffeeHub v1.0.0",
+                color = Color.Gray,
+                fontSize = 12.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp)
+            )
         }
     }
 }
