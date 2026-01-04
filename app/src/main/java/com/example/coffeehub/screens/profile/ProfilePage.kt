@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.coffeehub.screens.profile
 
 import android.content.Context
@@ -9,7 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,17 +19,45 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.coffeehub.data.repository.ProfileRepository
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfilePage(nav: NavController) {
 
     val context = nav.context
     val prefs = context.getSharedPreferences("coffeehub_prefs", Context.MODE_PRIVATE)
+    val repo = remember { ProfileRepository() }
+    val scope = rememberCoroutineScope()
 
-    val name = prefs.getString("profile_name", "") ?: ""
-    val email = prefs.getString("profile_email", "") ?: ""
-    val phone = prefs.getString("profile_phone", "") ?: ""
+    val userId = prefs.getInt("user_id", 0)
+
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+
+    val brown = Color(0xFF5C4033)
+    val cream = Color(0xFFF5E6CF)
+
+    /* -------- LOAD PROFILE FROM DB -------- */
+    LaunchedEffect(userId) {
+        if (userId != 0) {
+            try {
+                val res = repo.getProfile(userId)
+                if (res.status && res.data != null) {
+                    name = res.data.name ?: ""
+                    email = res.data.email ?: ""
+                    phone = res.data.phone ?: ""
+
+                    prefs.edit()
+                        .putString("profile_name", name)
+                        .putString("profile_email", email)
+                        .putString("profile_phone", phone)
+                        .apply()
+                }
+            } catch (_: Exception) {}
+        }
+    }
 
     val initials = name
         .trim()
@@ -37,31 +67,16 @@ fun ProfilePage(nav: NavController) {
         .joinToString("") { it.first().uppercaseChar().toString() }
         .ifEmpty { "U" }
 
-    val brown = Color(0xFF5C4033)
-    val cream = Color(0xFFF5E6CF)
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Profile",
-                        fontSize = 20.sp,
-                        color = Color.White
-                    )
-                },
+                title = { Text("Profile", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { nav.popBackStack() }) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
+                        Icon(Icons.Default.ArrowBack, null, tint = Color.White)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = brown
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = brown)
             )
         }
     ) { pad ->
@@ -88,11 +103,7 @@ fun ProfilePage(nav: NavController) {
                             .background(brown),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = initials,
-                            color = Color.White,
-                            fontSize = 28.sp
-                        )
+                        Text(initials, color = Color.White, fontSize = 28.sp)
                     }
 
                     Spacer(Modifier.width(16.dp))
@@ -103,16 +114,8 @@ fun ProfilePage(nav: NavController) {
                             fontSize = 20.sp,
                             color = brown
                         )
-                        Text(
-                            text = if (email.isNotBlank()) email else "—",
-                            color = Color.Gray,
-                            fontSize = 13.sp
-                        )
-                        Text(
-                            text = if (phone.isNotBlank()) phone else "—",
-                            color = Color.Gray,
-                            fontSize = 13.sp
-                        )
+                        Text(email.ifBlank { "—" }, fontSize = 13.sp, color = Color.Gray)
+                        Text(phone.ifBlank { "—" }, fontSize = 13.sp, color = Color.Gray)
                     }
                 }
             }
@@ -138,24 +141,16 @@ fun ProfilePage(nav: NavController) {
             Spacer(Modifier.height(20.dp))
 
             MenuItemRed("Logout", Icons.Default.Logout) {
+                prefs.edit().clear().apply()
                 nav.navigate("login") {
-                    popUpTo("home") { inclusive = true }
+                    popUpTo(0) { inclusive = true }
                 }
             }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Text(
-                text = "CoffeeHub v1.0.0",
-                color = Color.Gray,
-                fontSize = 12.sp,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(10.dp)
-            )
         }
     }
 }
+
+/* ---------------- MENU ITEM ---------------- */
 
 @Composable
 fun MenuItem(
@@ -173,17 +168,14 @@ fun MenuItem(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = Color(0xFF5C4033))
+        Icon(icon, null, tint = Color(0xFF5C4033))
         Spacer(Modifier.width(14.dp))
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            color = Color(0xFF5C4033),
-            modifier = Modifier.weight(1f)
-        )
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+        Text(text, fontSize = 16.sp, color = Color(0xFF5C4033), modifier = Modifier.weight(1f))
+        Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
     }
 }
+
+/* ---------------- MENU ITEM RED ---------------- */
 
 @Composable
 fun MenuItemRed(
@@ -201,14 +193,9 @@ fun MenuItemRed(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = Color.Red)
+        Icon(icon, null, tint = Color.Red)
         Spacer(Modifier.width(14.dp))
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            color = Color.Red,
-            modifier = Modifier.weight(1f)
-        )
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+        Text(text, fontSize = 16.sp, color = Color.Red, modifier = Modifier.weight(1f))
+        Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
     }
 }

@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -44,7 +43,7 @@ fun EditProfileScreen(nav: NavController) {
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
 
-    /* ---------- LOAD FROM BACKEND ---------- */
+    /* ---------- LOAD PROFILE FROM DB ---------- */
     LaunchedEffect(Unit) {
         val userId = prefs.getInt("user_id", 0)
 
@@ -56,7 +55,6 @@ fun EditProfileScreen(nav: NavController) {
                     email = res.data.email ?: ""
                     phone = res.data.phone ?: ""
                     dob = res.data.dob ?: ""
-
                 }
             } catch (e: Exception) {
                 Toast.makeText(context, "Failed to load profile", Toast.LENGTH_SHORT).show()
@@ -87,6 +85,7 @@ fun EditProfileScreen(nav: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            /* ---------- AVATAR ---------- */
             Box(contentAlignment = Alignment.BottomEnd) {
                 Box(
                     modifier = Modifier
@@ -96,7 +95,9 @@ fun EditProfileScreen(nav: NavController) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = name.takeIf { it.isNotBlank() }?.take(2)?.uppercase() ?: "U",
+                        text = name.takeIf { it.isNotBlank() }
+                            ?.take(2)
+                            ?.uppercase() ?: "U",
                         color = Color.White,
                         fontSize = 34.sp,
                         fontWeight = FontWeight.Bold
@@ -113,11 +114,13 @@ fun EditProfileScreen(nav: NavController) {
                 }
             }
 
+            /* ---------- FIELDS ---------- */
             EditField("Full Name", name) { name = it }
             EditField("Email", email) { email = it }
             EditField("Phone Number", phone) { phone = it }
             EditField("Date of Birth (YYYY-MM-DD)", dob) { dob = it }
 
+            /* ---------- SAVE ---------- */
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -135,24 +138,33 @@ fun EditProfileScreen(nav: NavController) {
                     scope.launch {
                         try {
                             val res = repo.updateProfile(
-                                userId, name, email, phone, dob
+                                userId,
+                                name,
+                                email,
+                                phone,
+                                dob
                             )
 
                             if (res.status) {
-                                prefs.edit()
-                                    .putString("profile_name", name)
-                                    .putString("profile_email", email)
-                                    .putString("profile_phone", phone)
-                                    .putString("profile_dob", dob)
-                                    .apply()
-
-                                Toast.makeText(context, "Profile updated", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Profile updated",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                                 nav.popBackStack()
                             } else {
-                                Toast.makeText(context, "Update failed", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Update failed",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Network error",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         } finally {
                             isSaving = false
                         }
@@ -175,8 +187,13 @@ fun EditProfileScreen(nav: NavController) {
     }
 }
 
+/* ---------- INPUT FIELD ---------- */
 @Composable
-fun EditField(label: String, value: String, onValueChange: (String) -> Unit) {
+fun EditField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit
+) {
     val brown = Color(0xFF5C4033)
 
     OutlinedTextField(

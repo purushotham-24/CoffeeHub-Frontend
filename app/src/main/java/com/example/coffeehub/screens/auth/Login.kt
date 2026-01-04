@@ -83,7 +83,12 @@ fun Login(nav: NavController) {
                             val userId = (res["userId"] as? Number)?.toInt() ?: -1
 
                             if (status && userId > 0) {
+
+                                // ✅ SAVE USER ID (CRITICAL FIX)
                                 SessionManager.userId = userId
+                                prefs.edit()
+                                    .putInt("user_id", userId)
+                                    .apply()
 
                                 if (rememberMe) {
                                     prefs.edit()
@@ -95,9 +100,11 @@ fun Login(nav: NavController) {
                                 nav.navigate("home") {
                                     popUpTo("login") { inclusive = true }
                                 }
+
                             } else {
                                 errorMsg = "Google login failed"
                             }
+
                         } catch (e: Exception) {
                             errorMsg = "Server error"
                         }
@@ -105,6 +112,7 @@ fun Login(nav: NavController) {
                 },
                 onError = { errorMsg = it }
             )
+
         } catch (e: Exception) {
             errorMsg = "Google sign-in failed"
         }
@@ -123,6 +131,9 @@ fun Login(nav: NavController) {
         if (email == "coffeehub376@gmail.com" && password == "Welcome@24") {
 
             SessionManager.userId = 0
+            prefs.edit()
+                .putInt("user_id", 0)
+                .apply()
 
             if (rememberMe) {
                 prefs.edit()
@@ -130,8 +141,6 @@ fun Login(nav: NavController) {
                     .putString("password", password)
                     .putBoolean("remember", true)
                     .apply()
-            } else {
-                prefs.edit().clear().apply()
             }
 
             nav.navigate("admin_home") {
@@ -157,7 +166,11 @@ fun Login(nav: NavController) {
                     val userId =
                         (res.data["user_id"] as Number).toInt()
 
+                    // ✅ SAVE USER ID (CRITICAL FIX)
                     SessionManager.userId = userId
+                    prefs.edit()
+                        .putInt("user_id", userId)
+                        .apply()
 
                     if (rememberMe) {
                         prefs.edit()
@@ -222,8 +235,8 @@ fun Login(nav: NavController) {
                     onValueChange = { email = it },
                     label = { Text("Email") },
                     leadingIcon = { Icon(Icons.Default.Email, null) },
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 Spacer(Modifier.height(14.dp))
@@ -247,8 +260,8 @@ fun Login(nav: NavController) {
                     visualTransformation =
                         if (passwordVisible) VisualTransformation.None
                         else PasswordVisualTransformation(),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 Spacer(Modifier.height(6.dp))
@@ -265,7 +278,6 @@ fun Login(nav: NavController) {
 
                 Spacer(Modifier.height(6.dp))
 
-                /* ✅ REMEMBER ME — LEFT ALIGNED */
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -279,12 +291,7 @@ fun Login(nav: NavController) {
 
                 if (errorMsg.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
-                    Text(
-                        errorMsg,
-                        color = Color.Red,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Text(errorMsg, color = Color.Red, fontSize = 13.sp)
                 }
 
                 Spacer(Modifier.height(18.dp))
@@ -309,8 +316,6 @@ fun Login(nav: NavController) {
                     }
                 }
 
-                Spacer(Modifier.height(12.dp))
-                Divider(color = Color.LightGray.copy(alpha = 0.4f))
                 Spacer(Modifier.height(12.dp))
 
                 OutlinedButton(
@@ -341,11 +346,7 @@ fun Login(nav: NavController) {
                     }
 
                     Spacer(Modifier.width(12.dp))
-                    Text(
-                        "Sign in with Google",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Text("Sign in with Google", fontWeight = FontWeight.Medium)
                 }
 
                 Spacer(Modifier.height(14.dp))
