@@ -42,9 +42,9 @@ fun Login(nav: NavController) {
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
 
-    var email by remember { mutableStateOf(prefs.getString("email", "") ?: "") }
-    var password by remember { mutableStateOf(prefs.getString("password", "") ?: "") }
-    var rememberMe by remember { mutableStateOf(prefs.getBoolean("remember", false)) }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var rememberMe by remember { mutableStateOf(false) }
 
     var errorMsg by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -58,13 +58,11 @@ fun Login(nav: NavController) {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
 
-        if (result.resultCode != Activity.RESULT_OK) {
-            return@rememberLauncherForActivityResult // silent cancel
-        }
+        if (result.resultCode != Activity.RESULT_OK) return@rememberLauncherForActivityResult
 
         try {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            val account = task.result
+            val account =
+                GoogleSignIn.getSignedInAccountFromIntent(result.data).result
             val idToken = account.idToken ?: return@rememberLauncherForActivityResult
 
             googleHelper.firebaseLogin(
@@ -102,6 +100,64 @@ fun Login(nav: NavController) {
             )
         } catch (e: Exception) {
             errorMsg = "Google sign-in failed"
+        }
+    }
+
+    /* ================= EMAIL / PASSWORD LOGIN ================= */
+
+    fun emailLogin() {
+
+        if (email.isBlank() || password.isBlank()) {
+            errorMsg = "Email and password required"
+            return
+        }
+
+        /* ===== ADMIN LOGIN (ONLY ADDITION) ===== */
+        if (email == "coffeehub376@gmail.com" && password == "Welcome@24") {
+
+            SessionManager.userId = 0   // admin id
+            prefs.edit().putInt("user_id", 0).apply()
+
+            nav.navigate("admin_home") {
+                popUpTo("login") { inclusive = true }
+            }
+            return
+        }
+        /* ===================================== */
+
+        isLoading = true
+        errorMsg = ""
+
+        scope.launch {
+            try {
+                val res = RetrofitClient.api.login(
+                    mapOf(
+                        "email" to email.trim(),
+                        "password" to password
+                    )
+                )
+
+                if (res.status && res.data != null) {
+
+                    val userId =
+                        (res.data["user_id"] as Number).toInt()
+
+                    SessionManager.userId = userId
+                    prefs.edit().putInt("user_id", userId).apply()
+
+                    nav.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
+
+                } else {
+                    errorMsg = res.message
+                }
+
+            } catch (e: Exception) {
+                errorMsg = "Network error. Try again."
+            } finally {
+                isLoading = false
+            }
         }
     }
 
@@ -166,24 +222,18 @@ fun Login(nav: NavController) {
 
                 Spacer(Modifier.height(6.dp))
 
-                // ✅ FORGOT PASSWORD
                 Text(
                     text = "Forgot password?",
                     color = brown,
                     fontSize = 13.sp,
                     modifier = Modifier
                         .align(Alignment.End)
-                        .clickable {
-                            nav.navigate("forgot-password")
-                        }
+                        .clickable { nav.navigate("forgot-password") }
                 )
 
                 Spacer(Modifier.height(6.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(
                         checked = rememberMe,
                         onCheckedChange = { rememberMe = it }
@@ -199,23 +249,13 @@ fun Login(nav: NavController) {
                 Spacer(Modifier.height(20.dp))
 
                 Button(
-                    onClick = {
-                        if (email.isBlank() || password.isBlank()) {
-                            errorMsg = "Email and password required"
-                            return@Button
-                        }
-
-                        isLoading = true
-                        errorMsg = ""
-
-                        // TODO: normal email-password login API call
-                    },
+                    onClick = { emailLogin() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(55.dp),
+                    enabled = !isLoading,
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = brown),
-                    enabled = !isLoading
+                    colors = ButtonDefaults.buttonColors(containerColor = brown)
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
@@ -230,7 +270,6 @@ fun Login(nav: NavController) {
 
                 Spacer(Modifier.height(14.dp))
 
-                // ✅ GOOGLE SIGN-IN
                 OutlinedButton(
                     onClick = {
                         googleHelper.client.signOut().addOnCompleteListener {
@@ -248,7 +287,7 @@ fun Login(nav: NavController) {
                     Box(
                         modifier = Modifier
                             .size(34.dp)
-                            .background(Color.White, shape = RoundedCornerShape(50)),
+                            .background(Color.White, RoundedCornerShape(50)),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
