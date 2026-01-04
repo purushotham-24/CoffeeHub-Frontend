@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -42,9 +43,9 @@ fun Login(nav: NavController) {
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
+    var email by remember { mutableStateOf(prefs.getString("email", "") ?: "") }
+    var password by remember { mutableStateOf(prefs.getString("password", "") ?: "") }
+    var rememberMe by remember { mutableStateOf(prefs.getBoolean("remember", false)) }
 
     var errorMsg by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -83,7 +84,13 @@ fun Login(nav: NavController) {
 
                             if (status && userId > 0) {
                                 SessionManager.userId = userId
-                                prefs.edit().putInt("user_id", userId).apply()
+
+                                if (rememberMe) {
+                                    prefs.edit()
+                                        .putString("email", gEmail)
+                                        .putBoolean("remember", true)
+                                        .apply()
+                                }
 
                                 nav.navigate("home") {
                                     popUpTo("login") { inclusive = true }
@@ -112,18 +119,26 @@ fun Login(nav: NavController) {
             return
         }
 
-        /* ===== ADMIN LOGIN (ONLY ADDITION) ===== */
+        /* ===== ADMIN LOGIN ===== */
         if (email == "coffeehub376@gmail.com" && password == "Welcome@24") {
 
-            SessionManager.userId = 0   // admin id
-            prefs.edit().putInt("user_id", 0).apply()
+            SessionManager.userId = 0
+
+            if (rememberMe) {
+                prefs.edit()
+                    .putString("email", email)
+                    .putString("password", password)
+                    .putBoolean("remember", true)
+                    .apply()
+            } else {
+                prefs.edit().clear().apply()
+            }
 
             nav.navigate("admin_home") {
                 popUpTo("login") { inclusive = true }
             }
             return
         }
-        /* ===================================== */
 
         isLoading = true
         errorMsg = ""
@@ -143,7 +158,16 @@ fun Login(nav: NavController) {
                         (res.data["user_id"] as Number).toInt()
 
                     SessionManager.userId = userId
-                    prefs.edit().putInt("user_id", userId).apply()
+
+                    if (rememberMe) {
+                        prefs.edit()
+                            .putString("email", email)
+                            .putString("password", password)
+                            .putBoolean("remember", true)
+                            .apply()
+                    } else {
+                        prefs.edit().clear().apply()
+                    }
 
                     nav.navigate("home") {
                         popUpTo("login") { inclusive = true }
@@ -183,16 +207,22 @@ fun Login(nav: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                Text("Welcome Back ☕", fontSize = 28.sp, color = brown)
+                Text(
+                    "Welcome Back ☕",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = brown
+                )
                 Text("Sign in to continue", fontSize = 14.sp, color = Color.Gray)
 
-                Spacer(Modifier.height(25.dp))
+                Spacer(Modifier.height(24.dp))
 
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
                     leadingIcon = { Icon(Icons.Default.Email, null) },
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -217,6 +247,7 @@ fun Login(nav: NavController) {
                     visualTransformation =
                         if (passwordVisible) VisualTransformation.None
                         else PasswordVisualTransformation(),
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -227,13 +258,18 @@ fun Login(nav: NavController) {
                     color = brown,
                     fontSize = 13.sp,
                     modifier = Modifier
-                        .align(Alignment.End)
-                        .clickable { nav.navigate("forgot-password") }
+                        .fillMaxWidth()
+                        .clickable { nav.navigate("forgot-password") },
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End
                 )
 
                 Spacer(Modifier.height(6.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                /* ✅ REMEMBER ME — LEFT ALIGNED */
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Checkbox(
                         checked = rememberMe,
                         onCheckedChange = { rememberMe = it }
@@ -243,10 +279,15 @@ fun Login(nav: NavController) {
 
                 if (errorMsg.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
-                    Text(errorMsg, color = Color.Red, fontSize = 13.sp)
+                    Text(
+                        errorMsg,
+                        color = Color.Red,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(18.dp))
 
                 Button(
                     onClick = { emailLogin() },
@@ -268,7 +309,9 @@ fun Login(nav: NavController) {
                     }
                 }
 
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(12.dp))
+                Divider(color = Color.LightGray.copy(alpha = 0.4f))
+                Spacer(Modifier.height(12.dp))
 
                 OutlinedButton(
                     onClick = {
@@ -298,7 +341,11 @@ fun Login(nav: NavController) {
                     }
 
                     Spacer(Modifier.width(12.dp))
-                    Text("Sign in with Google")
+                    Text(
+                        "Sign in with Google",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
 
                 Spacer(Modifier.height(14.dp))
