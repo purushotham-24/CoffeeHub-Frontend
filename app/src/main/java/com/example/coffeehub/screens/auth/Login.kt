@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.coffeehub.R
 import com.example.coffeehub.data.network.RetrofitClient
-import com.example.coffeehub.data.repository.AuthRepository
 import com.example.coffeehub.utils.GoogleSignInHelper
 import com.example.coffeehub.utils.SessionManager
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -165,7 +164,21 @@ fun Login(nav: NavController) {
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(6.dp))
+
+                // ✅ FORGOT PASSWORD
+                Text(
+                    text = "Forgot password?",
+                    color = brown,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .clickable {
+                            nav.navigate("forgot-password")
+                        }
+                )
+
+                Spacer(Modifier.height(6.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -186,19 +199,38 @@ fun Login(nav: NavController) {
                 Spacer(Modifier.height(20.dp))
 
                 Button(
-                    onClick = { /* sign in */ },
+                    onClick = {
+                        if (email.isBlank() || password.isBlank()) {
+                            errorMsg = "Email and password required"
+                            return@Button
+                        }
+
+                        isLoading = true
+                        errorMsg = ""
+
+                        // TODO: normal email-password login API call
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(55.dp),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = brown)
+                    colors = ButtonDefaults.buttonColors(containerColor = brown),
+                    enabled = !isLoading
                 ) {
-                    Text("Sign In", fontSize = 18.sp, color = Color.White)
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Sign In", fontSize = 18.sp, color = Color.White)
+                    }
                 }
 
                 Spacer(Modifier.height(14.dp))
 
-                /* ===== GOOGLE SIGN-IN (ICON SIZE FIXED) ===== */
+                // ✅ GOOGLE SIGN-IN
                 OutlinedButton(
                     onClick = {
                         googleHelper.client.signOut().addOnCompleteListener {
@@ -213,7 +245,6 @@ fun Login(nav: NavController) {
                     shape = RoundedCornerShape(14.dp)
                 ) {
 
-                    // ✅ Bigger Google icon with white background
                     Box(
                         modifier = Modifier
                             .size(34.dp)
