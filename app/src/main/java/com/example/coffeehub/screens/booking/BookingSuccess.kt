@@ -58,9 +58,15 @@ fun BookingSuccess(nav: NavController) {
         ) return@LaunchedEffect
 
         // 🔒 LOCK SEATS (LOCAL)
+        // 🔒 LOCK SEATS FOR CURRENT HOUR
+        // 🔒 LOCK SEATS (LOCAL)
         if (isSeatBooking) {
-            SeatManager.occupySeats(BookingManager.selectedSeats.value)
+            SeatManager.occupySeats(
+                BookingManager.selectedSeats.value
+            )
         }
+
+
 
         val bookingTitle = if (isSeatBooking)
             "Seats: ${BookingManager.selectedSeats.value.joinToString(", ")}"

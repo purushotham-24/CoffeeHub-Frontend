@@ -17,30 +17,25 @@ object SeatManager {
         resetSeats()
     }
 
-    // 🔒 Lock seats after booking
+    /**
+     * Call this AFTER booking confirmation
+     */
     fun occupySeats(bookedSeats: List<String>) {
+
+        // 🔒 Mark ONLY booked seats as occupied
         seats.forEach { seat ->
             if (seat.id in bookedSeats) {
                 seat.status = "occupied"
             }
         }
 
-        // ♻ Optional auto-reset
+        // ✅ Reset ONLY when all seats are occupied
         if (seats.all { it.status == "occupied" }) {
             resetSeats()
         }
     }
 
-    // 🔓 Free seats after cancellation
-    fun freeSeats(seatIds: List<String>) {
-        seats.forEach { seat ->
-            if (seat.id in seatIds) {
-                seat.status = "available"
-            }
-        }
-    }
-
-    // ♻ Reset all seats
+    // ♻ Reset seats for next slot
     private fun resetSeats() {
         seats.clear()
         seatIds.forEach {

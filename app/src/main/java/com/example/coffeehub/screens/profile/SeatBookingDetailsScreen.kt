@@ -167,7 +167,8 @@ fun SeatBookingDetailsScreen(nav: NavController) {
                                 .split(",")
                                 .map { it.trim() }
 
-                            SeatManager.freeSeats(seatIds)
+                            // Seats are auto-released based on time slot
+
                         }
 
                         BookingHistoryManager.bookings.remove(selectedBooking)

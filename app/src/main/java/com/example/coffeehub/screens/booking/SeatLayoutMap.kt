@@ -21,10 +21,7 @@ import com.example.coffeehub.screens.home.components.HeaderBar
 @Composable
 fun SeatLayoutMap(nav: NavController) {
 
-    // 🔹 LOCAL SELECTION STATE
     var selectedSeats by remember { mutableStateOf(setOf<String>()) }
-
-    // 🔹 DYNAMIC SEATS
     val seats = SeatManager.seats
 
     Column(
@@ -33,9 +30,13 @@ fun SeatLayoutMap(nav: NavController) {
             .background(Color.White)
     ) {
 
-        HeaderBar(title = "Select Your Seats", showBack = true, nav = nav)
+        HeaderBar(
+            title = "Select Your Seats",
+            showBack = true,
+            nav = nav
+        )
 
-        Column(Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
 
             Box(
                 modifier = Modifier
@@ -49,11 +50,10 @@ fun SeatLayoutMap(nav: NavController) {
 
             Spacer(Modifier.height(22.dp))
 
-            // 🪑 SEAT GRID
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 seats.chunked(4).forEach { row ->
                     Row(
-                        Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         row.forEach { seat ->
@@ -111,7 +111,6 @@ fun SeatLayoutMap(nav: NavController) {
 
             Spacer(Modifier.height(30.dp))
 
-            // 🟢 LEGEND
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -128,7 +127,6 @@ fun SeatLayoutMap(nav: NavController) {
 
         Spacer(Modifier.weight(1f))
 
-        // 🔘 CONFIRM BUTTON
         Button(
             onClick = {
                 BookingManager.bookingType.value = "seat"
@@ -141,18 +139,12 @@ fun SeatLayoutMap(nav: NavController) {
                 .padding(20.dp)
                 .height(58.dp),
             shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedSeats.isNotEmpty())
-                    Color(0xFF5C4033) else Color.LightGray
-            )
+            colors = ButtonDefaults.buttonColors(Color(0xFF5C4033))
         ) {
             Text(
-                text = if (selectedSeats.isNotEmpty())
-                    "Confirm Seats (${selectedSeats.joinToString(", ")})"
-                else
-                    "Select Seats",
+                "Confirm Seats (${selectedSeats.joinToString(", ")})",
                 fontSize = 16.sp,
-                color = if (selectedSeats.isNotEmpty()) Color.White else Color.Gray,
+                color = Color.White,
                 fontWeight = FontWeight.SemiBold
             )
         }

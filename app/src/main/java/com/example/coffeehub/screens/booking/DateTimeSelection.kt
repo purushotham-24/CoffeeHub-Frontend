@@ -21,6 +21,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,18 +30,27 @@ fun DateTimeSelection(nav: NavController) {
     val today = LocalDate.now()
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-    var selectedDate by remember {
-        mutableStateOf(today.format(formatter))
-    }
+    var selectedDate by remember { mutableStateOf(today.format(formatter)) }
     var selectedTime by remember { mutableStateOf("") }
     var showCalendar by remember { mutableStateOf(false) }
 
-    val timeSlots = listOf(
-        "09:00 AM","10:00 AM","11:00 AM","12:00 PM",
-        "01:00 PM","02:00 PM","03:00 PM","04:00 PM","05:00 PM","06:00 PM"
-    )
+    val isSeatBooking = BookingManager.bookingType.value == "seat"
 
-    // ✅ Correct DatePicker state
+    // 🕒 Cafe hours (7 AM – 11 PM)
+    val startHour = 7
+    val endHour = 23
+    val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+
+    val totalSeats = SeatManager.seats.size
+
+    // ⏰ Build time slots
+    val timeSlots = (startHour until endHour).map { hour ->
+        val displayHour = if (hour % 12 == 0) 12 else hour % 12
+        val period = if (hour < 12) "AM" else "PM"
+        String.format("%02d:00 %s", displayHour, period)
+    }
+
+    // 📅 Date picker
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = today
             .atStartOfDay(ZoneId.systemDefault())
@@ -52,7 +62,7 @@ fun DateTimeSelection(nav: NavController) {
                     .ofEpochMilli(utcTimeMillis)
                     .atZone(ZoneId.systemDefault())
                     .toLocalDate()
-                return !pickedDate.isBefore(today) // 🚫 block past dates
+                return !pickedDate.isBefore(today)
             }
         }
     )
@@ -71,7 +81,7 @@ fun DateTimeSelection(nav: NavController) {
 
         Column(Modifier.padding(20.dp)) {
 
-            // 📅 DATE
+            /* ---------------- DATE ---------------- */
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.CalendarToday, null, tint = Color(0xFF5C4033))
                 Spacer(Modifier.width(8.dp))
@@ -95,7 +105,7 @@ fun DateTimeSelection(nav: NavController) {
 
             Spacer(Modifier.height(24.dp))
 
-            // ⏰ TIME
+            /* ---------------- TIME ---------------- */
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Schedule, null, tint = Color(0xFF5C4033))
                 Spacer(Modifier.width(8.dp))
@@ -105,32 +115,67 @@ fun DateTimeSelection(nav: NavController) {
             Spacer(Modifier.height(12.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                timeSlots.chunked(3).forEach { row ->
+                timeSlots.chunked(3).forEachIndexed { rowIndex, row ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        row.forEach { time ->
+                        row.forEachIndexed { colIndex, time ->
+
+                            val hour = startHour + (rowIndex * 3 + colIndex)
+
+                            // ⛔ Past time today
+                            val isPast =
+                                selectedDate == today.format(formatter) &&
+                                        hour <= currentHour
+
+                            // 🪑 Seat-only booking restriction
+                            val bookedSeatCount =
+                                if (isSeatBooking)
+                                    BookingHistoryManager.bookings
+                                        .filter {
+                                            it.date == selectedDate && it.time == time
+                                        }
+                                        .sumOf { booking ->
+                                            booking.title
+                                                .removePrefix("Seats:")
+                                                .split(",")
+                                                .map { it.trim() }
+                                                .filter { it.isNotEmpty() }
+                                                .size
+                                        }
+                                else 0
+
+                            // ❌ Disable only if SEAT booking and fully booked
+                            val isFullyBooked =
+                                isSeatBooking && bookedSeatCount >= totalSeats
+
+                            val enabled = !isPast && !isFullyBooked
+
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(48.dp)
                                     .background(
-                                        if (selectedTime == time)
-                                            Color(0xFF5C4033)
-                                        else
-                                            Color(0xFFF5E6CF),
+                                        when {
+                                            !enabled -> Color(0xFFE5E5E5)
+                                            selectedTime == time -> Color(0xFF5C4033)
+                                            else -> Color(0xFFF5E6CF)
+                                        },
                                         RoundedCornerShape(14.dp)
                                     )
-                                    .clickable { selectedTime = time },
+                                    .clickable(enabled = enabled) {
+                                        selectedTime = time
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    time,
-                                    color = if (selectedTime == time)
-                                        Color.White
-                                    else
-                                        Color(0xFF5C4033),
+                                    text = time,
+                                    color = when {
+                                        !enabled -> Color.Gray
+                                        selectedTime == time -> Color.White
+                                        else -> Color(0xFF5C4033)
+                                    },
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -146,11 +191,6 @@ fun DateTimeSelection(nav: NavController) {
             onClick = {
                 BookingManager.selectedDate.value = selectedDate
                 BookingManager.selectedTime.value = selectedTime
-
-                if (BookingManager.bookingType.value.isBlank()) {
-                    BookingManager.bookingType.value = "workspace"
-                }
-
                 nav.navigate("booking_confirmation")
             },
             enabled = selectedTime.isNotEmpty(),
@@ -170,7 +210,7 @@ fun DateTimeSelection(nav: NavController) {
         }
     }
 
-    // 📅 DATE PICKER DIALOG (CORRECT API)
+    /* ---------------- DATE PICKER ---------------- */
     if (showCalendar) {
         DatePickerDialog(
             onDismissRequest = { showCalendar = false },
@@ -183,6 +223,7 @@ fun DateTimeSelection(nav: NavController) {
                             .toLocalDate()
                         selectedDate = pickedDate.format(formatter)
                     }
+                    selectedTime = ""
                     showCalendar = false
                 }) {
                     Text("OK")
