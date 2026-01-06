@@ -39,18 +39,20 @@ fun DateTimeSelection(nav: NavController) {
     // 🕒 Cafe hours (7 AM – 11 PM)
     val startHour = 7
     val endHour = 23
-    val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    val calendar = Calendar.getInstance()
+    val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+    val currentMinute = calendar.get(Calendar.MINUTE)
 
     val totalSeats = SeatManager.seats.size
 
-    // ⏰ Build time slots
+    /* ---------------- TIME SLOTS ---------------- */
     val timeSlots = (startHour until endHour).map { hour ->
         val displayHour = if (hour % 12 == 0) 12 else hour % 12
         val period = if (hour < 12) "AM" else "PM"
         String.format("%02d:00 %s", displayHour, period)
     }
 
-    // 📅 Date picker
+    /* ---------------- DATE PICKER ---------------- */
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = today
             .atStartOfDay(ZoneId.systemDefault())
@@ -73,11 +75,7 @@ fun DateTimeSelection(nav: NavController) {
             .background(Color.White)
     ) {
 
-        HeaderBar(
-            title = "Select Date & Time",
-            nav = nav,
-            showBack = true
-        )
+        HeaderBar(title = "Select Date & Time", nav = nav, showBack = true)
 
         Column(Modifier.padding(20.dp)) {
 
@@ -124,33 +122,36 @@ fun DateTimeSelection(nav: NavController) {
 
                             val hour = startHour + (rowIndex * 3 + colIndex)
 
-                            // ⛔ Past time today
-                            val isPast =
+                            /* ❌ Past hour */
+                            val isPastHour =
                                 selectedDate == today.format(formatter) &&
-                                        hour <= currentHour
+                                        hour < currentHour
 
-                            // 🪑 Seat-only booking restriction
+                            /* ❌ Past 15 minutes of current hour */
+                            val isPast15Mins =
+                                selectedDate == today.format(formatter) &&
+                                        hour == currentHour &&
+                                        currentMinute > 15
+
+                            /* 🪑 Seat booking full */
                             val bookedSeatCount =
                                 if (isSeatBooking)
                                     BookingHistoryManager.bookings
                                         .filter {
                                             it.date == selectedDate && it.time == time
                                         }
-                                        .sumOf { booking ->
-                                            booking.title
+                                        .sumOf {
+                                            it.title
                                                 .removePrefix("Seats:")
                                                 .split(",")
-                                                .map { it.trim() }
-                                                .filter { it.isNotEmpty() }
-                                                .size
+                                                .count { seat -> seat.trim().isNotEmpty() }
                                         }
                                 else 0
 
-                            // ❌ Disable only if SEAT booking and fully booked
                             val isFullyBooked =
                                 isSeatBooking && bookedSeatCount >= totalSeats
 
-                            val enabled = !isPast && !isFullyBooked
+                            val enabled = !isPastHour && !isPast15Mins && !isFullyBooked
 
                             Box(
                                 modifier = Modifier
@@ -230,10 +231,7 @@ fun DateTimeSelection(nav: NavController) {
                 }
             }
         ) {
-            DatePicker(
-                state = datePickerState,
-                showModeToggle = false
-            )
+            DatePicker(state = datePickerState, showModeToggle = false)
         }
     }
 }
