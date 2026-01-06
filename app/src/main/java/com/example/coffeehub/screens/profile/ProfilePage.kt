@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.coffeehub.data.repository.ProfileRepository
 import com.example.coffeehub.utils.SessionManager
-import kotlinx.coroutines.launch
 
 @Composable
 fun ProfilePage(nav: NavController) {
@@ -29,18 +28,16 @@ fun ProfilePage(nav: NavController) {
     val context = nav.context
     val prefs = context.getSharedPreferences("coffeehub_prefs", Context.MODE_PRIVATE)
     val repo = remember { ProfileRepository() }
-    val scope = rememberCoroutineScope()
 
     val userId = prefs.getInt("user_id", 0)
 
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
 
     val brown = Color(0xFF5C4033)
     val cream = Color(0xFFF5E6CF)
 
-    /* ---------- LOAD PROFILE FROM DB ---------- */
+    /* ---------- LOAD PROFILE ---------- */
     LaunchedEffect(userId) {
         if (userId != 0) {
             try {
@@ -48,16 +45,14 @@ fun ProfilePage(nav: NavController) {
                 if (res.status && res.data != null) {
                     name = res.data.name ?: ""
                     email = res.data.email ?: ""
-                    phone = res.data.phone ?: ""
 
-                    // cache locally (optional)
+                    // Cache locally
                     prefs.edit()
                         .putString("profile_name", name)
                         .putString("profile_email", email)
-                        .putString("profile_phone", phone)
                         .apply()
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) { }
         }
     }
 
@@ -90,6 +85,7 @@ fun ProfilePage(nav: NavController) {
                 .background(Color.White)
         ) {
 
+            /* ---------- PROFILE HEADER ---------- */
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -116,8 +112,11 @@ fun ProfilePage(nav: NavController) {
                             fontSize = 20.sp,
                             color = brown
                         )
-                        Text(email.ifBlank { "—" }, fontSize = 13.sp, color = Color.Gray)
-                        Text(phone.ifBlank { "—" }, fontSize = 13.sp, color = Color.Gray)
+                        Text(
+                            text = email.ifBlank { "—" },
+                            fontSize = 13.sp,
+                            color = Color.Gray
+                        )
                     }
                 }
             }
@@ -142,7 +141,7 @@ fun ProfilePage(nav: NavController) {
 
             Spacer(Modifier.height(20.dp))
 
-            /* ---------- LOGOUT (REMEMBER ME SAFE) ---------- */
+            /* ---------- LOGOUT ---------- */
             MenuItemRed("Logout", Icons.Default.Logout) {
 
                 val remember = prefs.getBoolean("remember", false)
@@ -172,7 +171,9 @@ fun ProfilePage(nav: NavController) {
                 text = "CoffeeHub v1.0.0",
                 color = Color.Gray,
                 fontSize = 12.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp)
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(10.dp)
             )
         }
     }
