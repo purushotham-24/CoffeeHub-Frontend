@@ -6,40 +6,44 @@ import kotlinx.coroutines.*
 
 object OrderTrackingManager {
 
-    val steps = mutableStateListOf<StepModel>()
+    // Timeline steps (same as your UI)
+    val steps = mutableStateListOf(
+        StepModel(1, "Order Received", completed = true, active = false),
+        StepModel(2, "Order Confirmed", completed = false, active = true),
+        StepModel(3, "Preparing", completed = false, active = false),
+        StepModel(4, "Ready to Serve", completed = false, active = false),
+        StepModel(5, "Served", completed = false, active = false)
+    )
+
     val isTrackingStarted = mutableStateOf(false)
+
+    // ⏱ Simple countdown timer (10 minutes)
+    val remainingSeconds = mutableStateOf(10 * 60)
 
     private var job: Job? = null
 
-    fun startTracking(intervalMillis: Long = 3 * 60 * 1000) {
+    fun startTracking() {
         if (isTrackingStarted.value) return
         isTrackingStarted.value = true
 
         job = CoroutineScope(Dispatchers.Main).launch {
 
-            // Order Received → Completed immediately
-            updateStep(activeIndex = 1)
-
-            for (i in 2 until steps.size) {
-                delay(intervalMillis)
-                updateStep(activeIndex = i)
+            // 🔥 Simple countdown timer
+            while (remainingSeconds.value > 0) {
+                delay(1000)
+                remainingSeconds.value--
             }
-        }
-    }
 
-    private fun updateStep(activeIndex: Int) {
-        steps.forEachIndexed { index, step ->
-            steps[index] = step.copy(
-                completed = index < activeIndex,
-                active = index == activeIndex
-            )
+            // ⏱ Timer finished → Served becomes GREEN
+            steps[steps.lastIndex] =
+                steps.last().copy(completed = true, active = false)
         }
     }
 
     fun reset() {
         job?.cancel()
-        job = null
         isTrackingStarted.value = false
+        remainingSeconds.value = 10 * 60
 
         steps.clear()
         steps.addAll(

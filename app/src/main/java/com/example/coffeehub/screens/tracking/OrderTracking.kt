@@ -8,10 +8,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,7 +29,11 @@ fun OrderTrackingScreen(nav: NavController) {
     val lightGrey = Color(0xFFF6F6F6)
 
     val orderSteps = OrderTrackingManager.steps
-    val noOrderPlaced = orderSteps.all { !it.active && !it.completed }
+
+    // 🔥 Start timer once screen opens
+    LaunchedEffect(Unit) {
+        OrderTrackingManager.startTracking()
+    }
 
     Scaffold(
         topBar = {
@@ -51,8 +54,8 @@ fun OrderTrackingScreen(nav: NavController) {
                         }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back to Home",
+                            imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
                             tint = Color.White
                         )
                     }
@@ -73,32 +76,6 @@ fun OrderTrackingScreen(nav: NavController) {
                 .background(Color.White)
                 .verticalScroll(rememberScrollState())
         ) {
-
-            /* ---------------- EMPTY STATE ---------------- */
-            if (noOrderPlaced) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 32.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "No orders placed yet",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Gray
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "Place an order to start tracking your coffee",
-                        fontSize = 14.sp,
-                        color = Color.LightGray,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                return@Column
-            }
 
             /* ---------------- TIMELINE CARD ---------------- */
             Column(
@@ -152,9 +129,7 @@ fun OrderTrackingScreen(nav: NavController) {
 
                         Spacer(Modifier.width(16.dp))
 
-                        Column(
-                            modifier = Modifier.padding(top = 2.dp)
-                        ) {
+                        Column(modifier = Modifier.padding(top = 2.dp)) {
 
                             Text(
                                 text = step.name,
@@ -169,28 +144,15 @@ fun OrderTrackingScreen(nav: NavController) {
 
                             Spacer(Modifier.height(4.dp))
 
-                            when {
-                                step.active ->
-                                    Text(
-                                        text = "In progress",
-                                        fontSize = 12.sp,
-                                        color = Color.Gray
-                                    )
-
-                                step.completed ->
-                                    Text(
-                                        text = "Completed",
-                                        fontSize = 12.sp,
-                                        color = green
-                                    )
-
-                                else ->
-                                    Text(
-                                        text = "Pending",
-                                        fontSize = 12.sp,
-                                        color = Color.LightGray
-                                    )
-                            }
+                            Text(
+                                text = when {
+                                    step.active -> "In progress"
+                                    step.completed -> "Completed"
+                                    else -> "Pending"
+                                },
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
                         }
                     }
 
@@ -200,15 +162,42 @@ fun OrderTrackingScreen(nav: NavController) {
                 }
             }
 
+            /* ---------------- MESSAGE + TIMER BELOW SERVED ---------------- */
+            val seconds = OrderTrackingManager.remainingSeconds.value
+            val minutes = seconds / 60
+            val secs = seconds % 60
+
+            Spacer(Modifier.height(12.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "☕ Your coffee is being prepared",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.DarkGray,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = String.format(
+                        "It will be served in %02d:%02d mins",
+                        minutes,
+                        secs
+                    ),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = brown
+                )
+            }
+
             Spacer(Modifier.height(24.dp))
         }
     }
 }
-
-/* ---------------- MODEL ---------------- */
-data class StepModel(
-    val id: Int,
-    val name: String,
-    val completed: Boolean,
-    val active: Boolean
-)
