@@ -83,12 +83,8 @@ fun Login(nav: NavController) {
                             val userId = (res["userId"] as? Number)?.toInt() ?: -1
 
                             if (status && userId > 0) {
-
-                                // ✅ SAVE USER ID (CRITICAL FIX)
                                 SessionManager.userId = userId
-                                prefs.edit()
-                                    .putInt("user_id", userId)
-                                    .apply()
+                                prefs.edit().putInt("user_id", userId).apply()
 
                                 if (rememberMe) {
                                     prefs.edit()
@@ -100,11 +96,9 @@ fun Login(nav: NavController) {
                                 nav.navigate("home") {
                                     popUpTo("login") { inclusive = true }
                                 }
-
                             } else {
                                 errorMsg = "Google login failed"
                             }
-
                         } catch (e: Exception) {
                             errorMsg = "Server error"
                         }
@@ -118,7 +112,7 @@ fun Login(nav: NavController) {
         }
     }
 
-    /* ================= EMAIL / PASSWORD LOGIN ================= */
+    /* ================= EMAIL LOGIN ================= */
 
     fun emailLogin() {
 
@@ -127,21 +121,10 @@ fun Login(nav: NavController) {
             return
         }
 
-        /* ===== ADMIN LOGIN ===== */
+        // ADMIN LOGIN
         if (email == "coffeehub376@gmail.com" && password == "Welcome@24") {
-
             SessionManager.userId = 0
-            prefs.edit()
-                .putInt("user_id", 0)
-                .apply()
-
-            if (rememberMe) {
-                prefs.edit()
-                    .putString("email", email)
-                    .putString("password", password)
-                    .putBoolean("remember", true)
-                    .apply()
-            }
+            prefs.edit().putInt("user_id", 0).apply()
 
             nav.navigate("admin_home") {
                 popUpTo("login") { inclusive = true }
@@ -163,14 +146,9 @@ fun Login(nav: NavController) {
 
                 if (res.status && res.data != null) {
 
-                    val userId =
-                        (res.data["user_id"] as Number).toInt()
-
-                    // ✅ SAVE USER ID (CRITICAL FIX)
+                    val userId = (res.data["user_id"] as Number).toInt()
                     SessionManager.userId = userId
-                    prefs.edit()
-                        .putInt("user_id", userId)
-                        .apply()
+                    prefs.edit().putInt("user_id", userId).apply()
 
                     if (rememberMe) {
                         prefs.edit()
@@ -220,12 +198,7 @@ fun Login(nav: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                Text(
-                    "Welcome Back ☕",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = brown
-                )
+                Text("Welcome Back ☕", fontSize = 26.sp, fontWeight = FontWeight.SemiBold, color = brown)
                 Text("Sign in to continue", fontSize = 14.sp, color = Color.Gray)
 
                 Spacer(Modifier.height(24.dp))
@@ -253,7 +226,7 @@ fun Login(nav: NavController) {
                                     Icons.Filled.VisibilityOff
                                 else
                                     Icons.Filled.Visibility,
-                                null
+                                contentDescription = "Toggle password"
                             )
                         }
                     },
@@ -318,12 +291,11 @@ fun Login(nav: NavController) {
 
                 Spacer(Modifier.height(12.dp))
 
+                /* ===== GOOGLE SIGN IN BUTTON ===== */
                 OutlinedButton(
                     onClick = {
                         googleHelper.client.signOut().addOnCompleteListener {
-                            googleLauncher.launch(
-                                googleHelper.client.signInIntent
-                            )
+                            googleLauncher.launch(googleHelper.client.signInIntent)
                         }
                     },
                     modifier = Modifier
@@ -363,5 +335,15 @@ fun Login(nav: NavController) {
                 }
             }
         }
+
+        /* ===== FOOTER ===== */
+        Text(
+            text = "2026 © Powered by SIMATS Engineering",
+            fontSize = 12.sp,
+            color = Color.White.copy(alpha = 0.8f),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp)
+        )
     }
 }
