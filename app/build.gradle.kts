@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.coffeehub"
+    namespace = "com.simats.coffeehub"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.coffeehub"
+        applicationId = "com.simats.coffeehub"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
